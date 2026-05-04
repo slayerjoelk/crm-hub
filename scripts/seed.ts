@@ -37,25 +37,25 @@ async function seed() {
     })
     .returning();
 
-  // Create stages
-  const stages = await db
-    .insert(schema.pipelineStages)
-    .values([
-      { workspaceId: workspace.id, pipelineId: pipeline.id, name: "Lead", displayOrder: 1 },
-      { workspaceId: workspace.id, pipelineId: pipeline.id, name: "Qualified", displayOrder: 2 },
-      { workspaceId: workspace.id, pipelineId: pipeline.id, name: "Proposal", displayOrder: 3 },
-      { workspaceId: workspace.id, pipelineId: pipeline.id, name: "Won", displayOrder: 4 },
-      { workspaceId: workspace.id, pipelineId: pipeline.id, name: "Lost", displayOrder: 5 },
-    ])
-    .returning();
+  // Create stages one-by-one (drizzle values() takes single object)
+  const stageNames = ["Lead", "Qualified", "Proposal", "Won", "Lost"];
+  const stages: typeof schema.pipelineStages.$inferSelect[] = [];
+  for (let i = 0; i < stageNames.length; i++) {
+    const [s] = await db.insert(schema.pipelineStages).values({
+      pipelineId: pipeline.id,
+      name: stageNames[i],
+      displayOrder: i,
+    }).returning();
+    stages.push(s);
+  }
 
   // Create contacts
   const contacts = await db
     .insert(schema.contacts)
     .values([
-      { workspaceId: workspace.id, name: "John Smith", email: "john@acme.com", status: "active" },
-      { workspaceId: workspace.id, name: "Jane Doe", email: "jane@techcorp.com", status: "active" },
-      { workspaceId: workspace.id, name: "Bob Johnson", email: "bob@startup.io", status: "lead" },
+      { workspaceId: workspace.id, firstName: "John", lastName: "Smith", email: "john@acme.com", lifecycleStage: "customer", leadStatus: "connected" },
+      { workspaceId: workspace.id, firstName: "Jane", lastName: "Doe", email: "jane@techcorp.com", lifecycleStage: "customer", leadStatus: "connected" },
+      { workspaceId: workspace.id, firstName: "Bob", lastName: "Johnson", email: "bob@startup.io", lifecycleStage: "lead", leadStatus: "new" },
     ])
     .returning();
 
@@ -63,8 +63,8 @@ async function seed() {
   const companies = await db
     .insert(schema.companies)
     .values([
-      { workspaceId: workspace.id, name: "Acme Corp", domain: "acme.com", status: "active" },
-      { workspaceId: workspace.id, name: "TechCorp", domain: "techcorp.com", status: "active" },
+      { workspaceId: workspace.id, name: "Acme Corp", domain: "acme.com", lifecycleStage: "customer" },
+      { workspaceId: workspace.id, name: "TechCorp", domain: "techcorp.com", lifecycleStage: "customer" },
     ])
     .returning();
 
@@ -75,7 +75,7 @@ async function seed() {
       pipelineId: pipeline.id,
       stageId: stages[0].id,
       name: "Enterprise Deal",
-      value: "50000",
+      value: 50000,
       currency: "USD",
       priority: "high",
       status: "open",
@@ -85,7 +85,7 @@ async function seed() {
       pipelineId: pipeline.id,
       stageId: stages[1].id,
       name: "SMB Deal",
-      value: "12000",
+      value: 12000,
       currency: "USD",
       priority: "medium",
       status: "open",
