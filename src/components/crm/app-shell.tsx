@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { CommandPalette } from "@/components/crm/command-palette";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, BarChart3, CheckSquare, Activity, Settings, LogOut,
   ChevronLeft, ChevronRight, Plus, Search, Bell, Briefcase, Tag, Mail, FolderOpen, Zap, Upload,
   Menu, X, Home
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import GlobalSearch from "@/components/global-search";
 
 const nav = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -95,7 +95,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
         <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-slate-800 bg-slate-950 shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={()=>setMobileMenu(true)} className="md:hidden p-2 -ml-2 rounded-lg hover:bg-slate-800 text-slate-400"><Menu className="w-5 h-5"/></button>
-            <GlobalSearch />
+            <button onClick={()=>typeof window !== 'undefined' && window.dispatchEvent(new KeyboardEvent('keydown', {metaKey:true, key:'k'}))} className="hidden md:flex items-center gap-2 h-8 px-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 text-sm hover:bg-slate-800"><Search className="w-4 h-4"/> Search <span className="text-[10px] text-slate-500 border border-slate-800 rounded px-1.5 py-0.5">⌘K</span></button>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
             <Link href={`/${workspaceSlug}/contacts/new`} className="hidden md:flex items-center gap-2 h-8 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"><Plus className="w-4 h-4"/>Add Contact</Link>
@@ -107,6 +107,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-950">{children}</main>
+        <CommandPalette />
       </div>
     </div>
   );
