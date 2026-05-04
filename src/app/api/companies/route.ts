@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const body = await req.json();
     const [item] = await db.insert(schema.companies).values({ ...body, workspaceId }).returning();
-    await db.insert(schema.activities).values({ workspaceId, userId: "system", type: "contact_created", companyId: item.id, body: `Company "${item.name}" created.` });
+    await db.insert(schema.activities).values({ workspaceId, userId: "system", type: "company_created", companyId: item.id, body: `Company "${item.name}" created.` });
     return NextResponse.json({ data: item });
   });
 }

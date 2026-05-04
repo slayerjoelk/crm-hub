@@ -206,7 +206,7 @@ id: text("id").notNull().unique().$defaultFn(createId),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 type: text("type", {
-enum: ["email", "call", "meeting", "note", "task", "deal_stage_change", "deal_created", "deal_won", "deal_lost", "contact_created", "contact_updated", "sms", "whatsapp", "integration"]
+enum: ["email","call","meeting","note","task","deal_stage_change","deal_created","deal_won","deal_lost","contact_created","contact_updated","company_created","company_updated","sms","whatsapp","integration"]
 }).notNull(),
 // Association (polymorphic)
 contactId: text("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
