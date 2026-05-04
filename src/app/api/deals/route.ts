@@ -13,7 +13,27 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const body = await req.json();
-    const [item] = await db.insert(schema.deals).values({ ...body, workspaceId, status: body.status || "open" }).returning();
+    const stageId = body.stageId;
+    let probability = body.probability ?? body.stageProbability ?? 0;
+    if (stageId && !body.probability && !body.stageProbability) {
+      const [stage] = await db.select().from(schema.pipelineStages).where(eq(schema.pipelineStages.id, stageId));
+      probability = stage?.winProbability ?? 0;
+    }
+    const insertValues: any = {
+      workspaceId,
+      status: body.status || "open",
+      name: body.name,
+      value: body.amount ?? body.value ?? 0,
+      currency: body.currency || "USD",
+      stageId,
+      pipelineId: body.pipelineId,
+      primaryContactId: body.contactId || body.primaryContactId || null,
+      expectedCloseDate: body.expectedCloseDate ? new Date(body.expectedCloseDate) : null,
+      probability,
+    };
+    if (body.description) insertValues.description = body.description;
+    if (body.companyId) insertValues.companyId = body.companyId;
+    const [item] = await db.insert(schema.deals).values(insertValues).returning();
     await db.insert(schema.activities).values({ workspaceId, userId: "system", type: "deal_created", dealId: item.id, body: `Deal "${item.name}" created.` });
     return NextResponse.json({ data: item });
   });
