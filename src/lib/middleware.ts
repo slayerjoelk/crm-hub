@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "../auth";
+import { verifyToken } from "@/lib/auth";
 
 export interface WorkspaceContext {
   workspaceId: string;
@@ -19,5 +19,5 @@ export async function withWorkspace(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return handler({ workspaceId, userId, role || "member" });
+  return handler({ workspaceId, userId, role: role || "member" });
 }

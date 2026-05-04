@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import bcryptjs from "bcryptjs";
+import * as bcryptjs from "bcryptjs";
 
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "crm-hub-default-secret-change-in-prod"

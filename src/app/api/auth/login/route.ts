@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../lib/db";
-import { verifyPassword, createToken } from "../../../lib/auth";
+import { db, schema } from "@/lib/db";
+import { verifyPassword, createToken } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
@@ -11,18 +11,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    // Find user in workspace
-    const user = await db
+    // Resolve workspace
+    let workspaceId: string | undefined;
+    if (workspaceSlug) {
+      const ws = await db
+        .select()
+        .from(schema.workspaces)
+        .where(eq(schema.workspaces.slug, workspaceSlug.toLowerCase().trim()));
+      workspaceId = ws[0]?.id;
+    }
+
+    // Build conditions
+    const conditions: any[] = [eq(schema.users.email, email.toLowerCase().trim())];
+    if (workspaceId) {
+      conditions.push(eq(schema.users.workspaceId, workspaceId));
+    }
+
+    const users = await db
       .select()
       .from(schema.users)
-      .where(
-        and(
-          eq(schema.users.email, email.toLowerCase().trim()),
-          workspaceSlug ? eq(schema.users.role, "owner") : undefined
-        )
-      )
-      .get();
+      .where(and(...conditions));
 
+    const user = users[0];
     if (!user || user.status !== "active") {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
@@ -46,8 +56,7 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         token,
         expiresAt,
-      })
-      .get();
+      });
 
     const res = NextResponse.json({ user });
     res.cookies.set("session", token, {
@@ -60,7 +69,8 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (err: any) {
-    console.error("Login error:", err);
+    console.error("Login error:", err?.message || err);
+    console.error("Login error stack:", err?.stack);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }

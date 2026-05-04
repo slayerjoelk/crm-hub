@@ -1,7 +1,7 @@
-import { db, schema } from "../../../lib/db";
+import { db, schema } from "@/lib/db";
 import { eq, and, desc, like, sql, count } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
-import { withWorkspace } from "../../../lib/middleware";
+import { withWorkspace } from "@/lib/middleware";
 
 // GET /api/dashboard
 export async function GET(req: NextRequest) {

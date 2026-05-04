@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../lib/db";
-import { hashPassword, createToken } from "../../../lib/auth";
+import { db, schema } from "@/lib/db";
+import { hashPassword, createToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
       .select()
       .from(schema.workspaces)
       .where(eq(schema.workspaces.slug, workspaceSlug.toLowerCase().trim()))
-      .get();
+      ;
 
-    if (existingWorkspace) {
+    if (existingWorkspace.length > 0) {
       return NextResponse.json({ error: "Workspace slug already in use" }, { status: 409 });
     }
 
     // Create workspace
-    const workspace = await db
+    const [workspace] = await db
       .insert(schema.workspaces)
       .values({
         slug: workspaceSlug.toLowerCase().trim(),
@@ -32,11 +32,11 @@ export async function POST(req: NextRequest) {
         status: "active",
       })
       .returning()
-      .get();
+      ;
 
     // Create owner user
     const passwordHash = await hashPassword(password);
-    const user = await db
+    const [user] = await db
       .insert(schema.users)
       .values({
         workspaceId: workspace.id,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         status: "active",
       })
       .returning()
-      .get();
+      ;
 
     // Create session
     const token = await createToken({
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         token,
         expiresAt,
       })
-      .get();
+      ;
 
     // Set session cookie
     const res = NextResponse.json({ user, workspace });
