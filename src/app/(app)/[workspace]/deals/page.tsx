@@ -92,7 +92,7 @@ export default function DealsPage() {
                   {stageDeals.map((deal: any) => (
                     <div key={deal.id} draggable onDragStart={() => setDragging(deal.id)}
                       className={`p-3 rounded-lg border border-slate-700/50 bg-slate-800/40 cursor-grab active:cursor-grabbing hover:border-slate-600 transition-all ${dragging === deal.id ? "opacity-30" : ""}`}
-                      onClick={() => router.push(`./deals/${deal.id}`)}>
+                      onClick={() => router.push(`./${deal.id}`)}>
                       <div className="flex items-start justify-between mb-2">
                         <div className="text-sm font-medium text-slate-200 truncate">{deal.name}</div>
                         <button onClick={(e) => { e.stopPropagation(); }} className="p-0.5 rounded hover:bg-slate-700 text-slate-600"><MoreHorizontal className="w-3.5 h-3.5"/></button>

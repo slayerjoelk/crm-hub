@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Building2, BarChart3, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Calendar, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
@@ -26,6 +27,7 @@ function KpiCard({ title, value, icon: Icon, trend, trendLabel, color }: any) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   useEffect(() => { fetch("/api/dashboard").then(r => r.json()).then(json => setData(json)); }, []);
 
@@ -102,15 +104,32 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
           <h3 className="text-sm font-semibold text-slate-200 mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            {(data?.activities ?? []).slice(0,10).map((act: any) => (
-              <div key={act.id} className="flex items-start gap-3">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <div>
-                  <div className="text-sm text-slate-200">{act.body}</div>
-                  <div className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
+            {(data?.activities ?? []).slice(0,10).map((act: any, i: number) => {
+              const hasLink = act.contactId || act.dealId || act.companyId;
+              const linkTarget = act.contactId ? `./contacts/${act.contactId}` : act.dealId ? `./deals/${act.dealId}` : act.companyId ? `./companies/${act.companyId}` : undefined;
+              const label = act.contactId ? 'Contact' : act.dealId ? 'Deal' : 'Company';
+              if (hasLink) {
+                return (
+                  <button key={`${act.id}-${i}`} onClick={() => linkTarget && router.push(linkTarget)} className="w-full text-left flex items-start gap-3 p-3 rounded-lg hover:bg-slate-800/50 transition-colors cursor-pointer">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <div>
+                      <div className="text-sm text-slate-200">{act.body}</div>
+                      <div className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
+                      <div className="text-[11px] text-emerald-400 mt-1">Open {label} →</div>
+                    </div>
+                  </button>
+                );
+              }
+              return (
+                <div key={`${act.id}-${i}`} className="flex items-start gap-3 p-3">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0" />
+                  <div>
+                    <div className="text-sm text-slate-200">{act.body}</div>
+                    <div className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {(!data?.activities || data.activities.length === 0) && <div className="text-center text-sm text-slate-600 py-8">No activity yet.</div>}
           </div>
         </div>

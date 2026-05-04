@@ -2,37 +2,92 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, FileText, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
+
+const TAB_STYLE = "px-4 py-2.5 text-sm font-medium transition-colors relative";
+const TAB_ACTIVE = "text-emerald-400";
+const TAB_INACTIVE = "text-slate-400 hover:text-slate-200";
+
+const STATUS_BADGE = (status: string) => {
+  if (status === "won") return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+  if (status === "lost") return "bg-red-500/10 text-red-400 border border-red-500/20";
+  return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+};
+
+const TASK_STATUS = (status: string) => {
+  if (status === "done") return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+  if (status === "in_progress") return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+  return "bg-slate-700/50 text-slate-300 border border-slate-600/30";
+};
 
 export default function DealDetailPage() {
-  const { id } = useParams();
+  const { id, workspace } = useParams<{ id: string; workspace: string }>();
   const router = useRouter();
   const [deal, setDeal] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [pipelines, setPipelines] = useState<any[]>([]);
-  const [stages, setStages] = useState<any[]>([]);
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [dRes, aRes, tRes, pRes] = await Promise.all([
-          fetch(`/api/deals/${id}`).then(r => r.json()),
-          fetch(`/api/activities?entityType=deal&entityId=${id}`).then(r => r.json()),
-          fetch(`/api/tasks?dealId=${id}`).then(r => r.json()),
-          fetch(`/api/pipelines`).then(r => r.json()),
-        ]);
-        setDeal(dRes.data || null);
-        setActivities(aRes.data || []);
-        setTasks(tRes.data || []);
-        setPipelines(pRes.data || []);
-      } catch (e) { console.error(e); }
-      setLoading(false);
-    }
-    load();
-  }, [id]);
+  async function load() {
+    setLoading(true);
+    try {
+      const [dRes, aRes, tRes, pRes] = await Promise.all([
+        fetch(`/api/deals/${id}`).then(r => r.json()),
+        fetch(`/api/activities?entityType=deal&entityId=${id}`).then(r => r.json()),
+        fetch(`/api/tasks?dealId=${id}`).then(r => r.json()),
+        fetch(`/api/pipelines`).then(r => r.json()),
+      ]);
+      setDeal(dRes.data || null);
+      setActivities(aRes.data || []);
+      setTasks(tRes.data || []);
+      setPipelines(pRes.data || []);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  }
+
+  useEffect(() => { if (id) load(); }, [id]);
+
+  function openEdit() {
+    if (!deal) return;
+    setEditForm({
+      name: deal.name || "",
+      value: deal.value || "",
+      currency: deal.currency || "USD",
+      probability: deal.probability || 50,
+      priority: deal.priority || "medium",
+      status: deal.status || "open",
+      expectedCloseDate: deal.expectedCloseDate ? deal.expectedCloseDate.split("T")[0] : "",
+      description: deal.description || "",
+      closeReason: deal.closeReason || "",
+    });
+    setShowEdit(true);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    const payload = { ...editForm, value: editForm.value ? Number(editForm.value) : null };
+    const res = await fetch(`/api/deals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    setSaving(false);
+    if (res.ok) { setShowEdit(false); load(); }
+  }
+
+  async function doDelete() {
+    setDeleting(true);
+    const res = await fetch(`/api/deals/${id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (res.ok) { router.push(`/${workspace}/deals`); }
+  }
+
+  const inputCls = "w-full h-10 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
+  const labelCls = "block text-xs font-medium text-slate-500 mb-1";
 
   if (loading) return <div className="p-8 text-slate-400">Loading...</div>;
   if (!deal) return <div className="p-8 text-slate-400">Deal not found</div>;
@@ -46,12 +101,6 @@ export default function DealDetailPage() {
     return <div className={`w-8 h-8 rounded-full bg-${color}-500/10 flex items-center justify-center`}><Activity className={`w-4 h-4 text-${color}-400`} /></div>;
   };
 
-  const statusColor = (status: string) => {
-    if (status === "won") return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-    if (status === "lost") return "bg-red-500/10 text-red-400 border border-red-500/20";
-    return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
-  };
-
   const tabs = [
     { id: "overview", label: "Overview", count: null },
     { id: "activity", label: "Activity", count: activities.length },
@@ -62,6 +111,10 @@ export default function DealDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /> Back</button>
+        <div className="flex items-center gap-2">
+          <button onClick={openEdit} className="h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm flex items-center gap-2 hover:bg-slate-700 transition-colors"><Pencil size={14} /> Edit</button>
+          <button onClick={() => setShowDelete(true)} className="h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 text-red-400 text-sm flex items-center gap-2 hover:bg-red-500/10 hover:border-red-500/30 transition-colors"><Trash2 size={14} /> Delete</button>
+        </div>
       </div>
 
       <div className="flex items-start gap-4">
@@ -69,7 +122,7 @@ export default function DealDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-white">{deal.name}</h1>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor(deal.status)}`}>{deal.status}</span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_BADGE(deal.status)}`}>{deal.status}</span>
           </div>
           {pipeline && <div className="text-sm text-slate-500 mt-0.5">{pipeline.name} → {stageName}</div>}
         </div>
@@ -84,7 +137,7 @@ export default function DealDetailPage() {
 
       <div className="flex gap-1 border-b border-slate-800">
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${tab === t.id ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}>
+          <button key={t.id} onClick={() => setTab(t.id)} className={`${TAB_STYLE} ${tab === t.id ? TAB_ACTIVE : TAB_INACTIVE}`}>
             {t.label}
             {t.count !== null && <span className="ml-1.5 text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full">{t.count}</span>}
             {tab === t.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500/60 rounded-t-full" />}
@@ -134,9 +187,9 @@ export default function DealDetailPage() {
               <thead className="text-xs text-slate-500 uppercase bg-slate-800/40"><tr><th className="px-4 py-3">Title</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Priority</th><th className="px-4 py-3">Due</th></tr></thead>
               <tbody className="divide-y divide-slate-800">
                 {tasks.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-800/30 cursor-pointer transition-colors" onClick={() => router.push(`./tasks/${t.id}`)}>
+                  <tr key={t.id} className="hover:bg-slate-800/30 cursor-pointer transition-colors" onClick={() => router.push(`/${workspace}/tasks/${t.id}`)}>
                     <td className="px-4 py-3 font-medium text-slate-200">{t.title}</td>
-                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${t.status === "done" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : t.status === "in_progress" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-slate-700/50 text-slate-300 border border-slate-600/30"}`}>{t.status.replace(/_/g, " ")}</span></td>
+                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${TASK_STATUS(t.status)}`}>{t.status.replace(/_/g, " ")}</span></td>
                     <td className="px-4 py-3 text-slate-400 capitalize">{t.priority}</td>
                     <td className="px-4 py-3 text-slate-400">{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "-"}</td>
                   </tr>
@@ -144,6 +197,55 @@ export default function DealDetailPage() {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowEdit(false); }}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"><Pencil size={14} className="text-white" /></div>
+              <h2 className="text-lg font-semibold text-white">Edit Deal</h2>
+              <button onClick={() => setShowEdit(false)} className="ml-auto p-1.5 rounded-lg hover:bg-slate-800 text-slate-500"><X size={16} /></button>
+            </div>
+            <form onSubmit={saveEdit} className="p-6 space-y-4">
+              <div><label className={labelCls}>Name</label><input type="text" value={editForm.name || ""} onChange={e => setEditForm({...editForm, name: e.target.value})} className={inputCls} required /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Value</label><input type="number" value={editForm.value || ""} onChange={e => setEditForm({...editForm, value: e.target.value})} className={inputCls} /></div>
+                <div><label className={labelCls}>Currency</label><select value={editForm.currency || "USD"} onChange={e => setEditForm({...editForm, currency: e.target.value})} className={inputCls}><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="ZAR">ZAR</option></select></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Probability %</label><input type="number" min="0" max="100" value={editForm.probability || ""} onChange={e => setEditForm({...editForm, probability: e.target.value})} className={inputCls} /></div>
+                <div><label className={labelCls}>Expected Close</label><input type="date" value={editForm.expectedCloseDate || ""} onChange={e => setEditForm({...editForm, expectedCloseDate: e.target.value})} className={inputCls} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Status</label><select value={editForm.status || ""} onChange={e => setEditForm({...editForm, status: e.target.value})} className={inputCls}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></div>
+                <div><label className={labelCls}>Priority</label><select value={editForm.priority || ""} onChange={e => setEditForm({...editForm, priority: e.target.value})} className={inputCls}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
+              </div>
+              <div><label className={labelCls}>Description</label><textarea value={editForm.description || ""} onChange={e => setEditForm({...editForm, description: e.target.value})} className={`${inputCls} h-20 resize-none`} /></div>
+              {editForm.status === "lost" && <div><label className={labelCls}>Lost Reason</label><input type="text" value={editForm.closeReason || ""} onChange={e => setEditForm({...editForm, closeReason: e.target.value})} className={inputCls} /></div>}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowEdit(false)} className="h-9 px-4 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowDelete(false); }}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto"><AlertTriangle size={20} className="text-red-400" /></div>
+            <h3 className="text-lg font-semibold text-white">Delete Deal</h3>
+            <p className="text-sm text-slate-400">Are you sure you want to delete <span className="text-slate-200 font-medium">{deal.name}</span>? This cannot be undone.</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowDelete(false)} className="flex-1 h-9 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
+              <button onClick={doDelete} disabled={deleting} className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition-colors disabled:opacity-50">{deleting ? "Deleting..." : "Delete"}</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

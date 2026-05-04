@@ -2,10 +2,16 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-const dbUrl = process.env.TURSO_DATABASE_URL ?? "file:./local.db";
+const isPlaceholder =
+  !process.env.TURSO_DATABASE_URL ||
+  process.env.TURSO_DATABASE_URL === "libsql://your-db.turso.io";
+
+const dbUrl = isPlaceholder
+  ? "file:./local.db"
+  : process.env.TURSO_DATABASE_URL;
 
 const client = createClient({
-  url: dbUrl,
+  url: dbUrl!,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
