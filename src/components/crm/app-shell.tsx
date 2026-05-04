@@ -21,6 +21,7 @@ import {
   Zap,
   Tag,
   Mail,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const nav = [
   { label: "Activities", icon: Activity, href: "/activities" },
   { label: "Tags", icon: Tag, href: "/tags" },
   { label: "Emails", icon: Mail, href: "/emails" },
+  { label: "Sequences", icon: FolderOpen, href: "/sequences" },
   { label: "Integrations", icon: Zap, href: "/settings/integrations" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
