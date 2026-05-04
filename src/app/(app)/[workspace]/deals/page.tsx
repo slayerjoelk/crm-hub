@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DollarSign, Calendar, MoreHorizontal, Plus, X, Building2 } from "lucide-react";
 
 export default function DealsPage() {
+  const router = useRouter();
   const [deals, setDeals] = useState<any[]>([]);
   const [pipelines, setPipelines] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -89,10 +91,11 @@ export default function DealsPage() {
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {stageDeals.map((deal: any) => (
                     <div key={deal.id} draggable onDragStart={() => setDragging(deal.id)}
-                      className={`p-3 rounded-lg border border-slate-700/50 bg-slate-800/40 cursor-grab active:cursor-grabbing hover:border-slate-600 transition-all ${dragging === deal.id ? "opacity-30" : ""}`}>
+                      className={`p-3 rounded-lg border border-slate-700/50 bg-slate-800/40 cursor-grab active:cursor-grabbing hover:border-slate-600 transition-all ${dragging === deal.id ? "opacity-30" : ""}`}
+                      onClick={() => router.push(`./deals/${deal.id}`)}>
                       <div className="flex items-start justify-between mb-2">
                         <div className="text-sm font-medium text-slate-200 truncate">{deal.name}</div>
-                        <button className="p-0.5 rounded hover:bg-slate-700 text-slate-600"><MoreHorizontal className="w-3.5 h-3.5"/></button>
+                        <button onClick={(e) => { e.stopPropagation(); }} className="p-0.5 rounded hover:bg-slate-700 text-slate-600"><MoreHorizontal className="w-3.5 h-3.5"/></button>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-slate-400">
                         <span className="flex items-center gap-1"><DollarSign className="w-3 h-3"/>{deal.value ? "$"+deal.value.toLocaleString() : "-"}</span>

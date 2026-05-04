@@ -7,8 +7,10 @@ export async function GET(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
+    const contactId = searchParams.get("contactId");
     let list = await db.select().from(schema.tasks).where(eq(schema.tasks.workspaceId, workspaceId)).orderBy(desc(schema.tasks.createdAt));
     if (status) list = list.filter(t => t.status === status);
+    if (contactId) list = list.filter(t => t.contactId === contactId);
     return NextResponse.json({ data: list });
   });
 }

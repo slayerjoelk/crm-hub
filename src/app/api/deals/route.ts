@@ -5,7 +5,12 @@ import { eq, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
-    const list = await db.select().from(schema.deals).where(eq(schema.deals.workspaceId, workspaceId)).orderBy(desc(schema.deals.updatedAt));
+    const { searchParams } = new URL(req.url);
+    const contactId = searchParams.get("contactId");
+    const companyId = searchParams.get("companyId");
+    let list = await db.select().from(schema.deals).where(eq(schema.deals.workspaceId, workspaceId)).orderBy(desc(schema.deals.updatedAt));
+    if (contactId) list = list.filter(d => d.primaryContactId === contactId);
+    if (companyId) list = list.filter(d => d.companyId === companyId);
     return NextResponse.json({ data: list });
   });
 }

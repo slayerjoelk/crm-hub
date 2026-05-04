@@ -8,7 +8,9 @@ export async function GET(req: NextRequest) {
     try {
       const { searchParams } = new URL(req.url);
       const q = searchParams.get("q");
+      const companyId = searchParams.get("companyId");
       let list = await db.select().from(schema.contacts).where(eq(schema.contacts.workspaceId, workspaceId)).orderBy(desc(schema.contacts.createdAt));
+      if (companyId) list = list.filter(c => c.companyId === companyId);
       if (q) {
         const lower = q.toLowerCase();
         list = list.filter(c => (c.firstName+" "+c.lastName).toLowerCase().includes(lower)||(c.email||"").toLowerCase().includes(lower)||(c.phone||"").toLowerCase().includes(lower));

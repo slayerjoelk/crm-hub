@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Filter, Plus, MoreHorizontal, Building2, Globe, X } from "lucide-react";
 
 export default function CompaniesPage() {
+  const router = useRouter();
   const [companies, setCompanies] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -54,7 +56,7 @@ export default function CompaniesPage() {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {companies.map(c => (
-                <tr key={c.id} className="hover:bg-slate-800/30 transition-colors">
+                <tr key={c.id} className="hover:bg-slate-800/30 cursor-pointer transition-colors" onClick={() => router.push(`./companies/${c.id}`)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><Building2 className="w-4 h-4" /></div>

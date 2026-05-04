@@ -66,7 +66,7 @@ export default function ContactsPage() {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {contacts.map(c => (
-                <tr key={c.id} className="hover:bg-slate-800/30 transition-colors">
+                <tr key={c.id} className="hover:bg-slate-800/30 transition-colors cursor-pointer" onClick={() => router.push(`./contacts/${c.id}`)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-semibold">
