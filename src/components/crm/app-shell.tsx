@@ -19,6 +19,7 @@ import {
   Bell,
   Briefcase,
   Zap,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const nav = [
   { label: "Deals", icon: BarChart3, href: "/deals" },
   { label: "Tasks", icon: CheckSquare, href: "/tasks" },
   { label: "Activities", icon: Activity, href: "/activities" },
+  { label: "Tags", icon: Tag, href: "/tags" },
   { label: "Integrations", icon: Zap, href: "/settings/integrations" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];

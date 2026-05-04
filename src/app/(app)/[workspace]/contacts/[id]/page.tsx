@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mail, Phone, User, Building2, Activity, DollarSign, ListChecks, Clock, Mail as MailIcon, FileText, Phone as PhoneIcon, CalendarDays, MessageCircle, CheckSquare, TrendingUp, TrendingDown, Tag, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
-import { TagManager, TagChip, type TagItem } from "@/components/tag-manager";
+import { TagManager } from "@/components/tag-manager";
 
 const TYPE_ICON: Record<string, any> = { email: MailIcon, call: PhoneIcon, meeting: CalendarDays, note: FileText, task: CheckSquare, deal_created: TrendingUp, deal_won: TrendingUp, deal_lost: TrendingDown, deal_stage_changed: Activity, deal_updated: Activity, system: MessageCircle, contact_created: User, contact_updated: User, company_created: Building2, company_updated: Building2, integration: MessageCircle };
 
@@ -31,7 +31,6 @@ export default function ContactDetailPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
-  const [contactTags, setContactTags] = useState<TagItem[]>([]);
   const [tab, setTab] = useState<"overview" | "activity" | "deals" | "tasks">("overview");
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
@@ -121,6 +120,7 @@ export default function ContactDetailPage() {
             <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE(contact.lifecycleStage)}`}>{contact.lifecycleStage}</span>
           </h1>
           <p className="text-sm text-slate-400 mt-0.5">{contact.jobTitle}{contact.company?.name ? ` at ${contact.company.name}` : ""}</p>
+          <div className="mt-3"><TagManager entityType="contact" entityId={id} /></div>
           <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-400">
             {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 hover:text-blue-400 transition-colors"><Mail size={14} /> {contact.email}</a>}
             {contact.phone && <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 hover:text-blue-400 transition-colors"><Phone size={14} /> {contact.phone}</a>}

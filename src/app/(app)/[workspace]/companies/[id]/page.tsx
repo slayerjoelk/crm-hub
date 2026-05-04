@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Globe, Mail, Phone, MapPin, Calendar, Briefcase, FileText, Activity, Users, DollarSign, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Mail, Phone, MapPin, Calendar, Briefcase, FileText, Activity, Users, DollarSign, Pencil, Trash2, X, AlertTriangle, Tag } from "lucide-react";
+import { TagManager } from "@/components/tag-manager";
 
 const TAB_STYLE = "px-4 py-2.5 text-sm font-medium transition-colors relative";
 const TAB_ACTIVE = "text-emerald-400";
@@ -118,6 +119,9 @@ export default function CompanyDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-white">{company.name}</h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700 capitalize">{company.lifecycleStage || "subscriber"}</span>
+          </div>
+          <div className="mt-2">
+            <TagManager entityType="company" entityId={id} />
           </div>
           {company.domain && <a href={`https://${company.domain}`} target="_blank" rel="noreferrer" className="text-sm text-[#2B6ED2] hover:underline flex items-center gap-1 mt-1"><Globe className="w-3.5 h-3.5" />{company.domain}</a>}
         </div>

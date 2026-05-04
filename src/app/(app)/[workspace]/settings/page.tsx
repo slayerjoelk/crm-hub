@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Users, CreditCard, Palette, Mail, Clock, Hash, Building2, Shield, X, Send, Trash2, Tag } from "lucide-react";
-import { TagManager } from "@/components/tag-manager";
+import { Globe, Users, CreditCard, Palette, Tag, Building2, Shield, X, Send, Trash2, Hash, Clock } from "lucide-react";
 
 const TABS = [
   { id: "general", label: "General", icon: <Globe className="w-4 h-4" /> },
   { id: "team", label: "Team", icon: <Users className="w-4 h-4" /> },
-  { id: "tags", label: "Tags", icon: <Tag className="w-4 h-4" /> },
   { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" /> },
   { id: "appearance", label: "Appearance", icon: <Palette className="w-4 h-4" /> },
 ];
@@ -242,12 +240,6 @@ export default function SettingsPage() {
 
       {tab === "team" && (
         <TeamTab ws={ws} />
-      )}
-
-      {tab === "tags" && (
-        <div className="space-y-5">
-          <TagManager />
-        </div>
       )}
 
       {tab === "billing" && (

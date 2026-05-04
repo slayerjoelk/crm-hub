@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, FileText, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, FileText, Pencil, Trash2, X, AlertTriangle, Tag } from "lucide-react";
+import { TagManager } from "@/components/tag-manager";
 
 const TAB_STYLE = "px-4 py-2.5 text-sm font-medium transition-colors relative";
 const TAB_ACTIVE = "text-emerald-400";
@@ -123,6 +124,9 @@ export default function DealDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-white">{deal.name}</h1>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_BADGE(deal.status)}`}>{deal.status}</span>
+          </div>
+          <div className="mt-2">
+            <TagManager entityType="deal" entityId={id} />
           </div>
           {pipeline && <div className="text-sm text-slate-500 mt-0.5">{pipeline.name} → {stageName}</div>}
         </div>
