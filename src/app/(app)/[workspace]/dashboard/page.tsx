@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { Users, Building2, BarChart3, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Calendar, Clock } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 function KpiCard({ title, value, icon: Icon, trend, trendLabel, color }: any) {
   const up = trend >= 0;
@@ -30,19 +29,9 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   useEffect(() => { fetch("/api/dashboard").then(r => r.json()).then(json => setData(json)); }, []);
 
-  const chartData = [
-    { name: "Jan", revenue: 12000 }, { name: "Feb", revenue: 18000 }, { name: "Mar", revenue: 14000 },
-    { name: "Apr", revenue: 24000 }, { name: "May", revenue: 32000 }, { name: "Jun", revenue: 28000 },
-  ];
-  const pipelineColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
-  const pipelineData = (data?.deals && data.deals.length > 0)
-    ? data.deals.reduce((acc: any[], deal: any) => {
-        const key = deal.stageId || "Unknown";
-        const existing = acc.find((a: any) => a.name === key);
-        if (existing) { existing.value += deal.value || 0; } else { acc.push({ name: key, value: deal.value || 0 }); }
-        return acc;
-      }, [])
-    : [{ name: "No deals", value: 1 }];
+  const pipelineColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+  const chartData = data?.monthlyRevenue ?? [];
+  const pipelineData = data?.pipelineDistribution ?? [{ name: "No data", value: 1 }];
 
   return (
     <div className="space-y-6">
@@ -52,14 +41,14 @@ export default function DashboardPage() {
         <KpiCard title="Contacts" value={data?.stats?.contacts ?? "-"} icon={Users} trend={12} color="#3b82f6" />
         <KpiCard title="Companies" value={data?.stats?.companies ?? "-"} icon={Building2} trend={8} color="#8b5cf6" />
         <KpiCard title="Deals" value={data?.stats?.deals ?? "-"} icon={BarChart3} trend={-3} color="#f59e0b" />
-        <KpiCard title="Revenue" value={data ? "$" + (data.stats?.revenueWon ?? 0).toLocaleString() : "-"} icon={DollarSign} trend={24} color="#10b981" />
+        <KpiCard title="Revenue (Closed)" value={data ? "$" + (data.stats?.revenueWon ?? 0).toLocaleString() : "-"} icon={DollarSign} trend={24} color="#10b981" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-200">Revenue Overview</h3>
-            <div className="text-xs text-emerald-400 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" />+18% this month</div>
+            <div className="text-xs text-emerald-400 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5"/>+18% this month</div>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -83,9 +72,10 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={pipelineData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} dataKey="value" stroke="none">
-                  {pipelineData.map((_: any, i: number) => <Cell key={i} fill={pipelineColors[i % pipelineColors.length]} />)}
+                  {pipelineData.map((_: any, i: number) => <Cell key={`cell-${i}`} fill={pipelineColors[i % pipelineColors.length]} />)}
                 </Pie>
-                <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid #1e293b",borderRadius:"8px",color:"#e2e8f0"}} />
+                <Tooltip contentStyle={{backgroundColor:"#0f172a",border:"1px solid #1e293b",borderRadius:"8px",color:"#e2e8f0"}} formatter={(value: any) => [`$${value?.toLocaleString?.() ?? value}`, ""]} />
+                <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{fontSize: 12, color: '#94a3b8'}} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -100,7 +90,7 @@ export default function DashboardPage() {
               <div key={deal.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50">
                 <div>
                   <div className="text-sm font-medium text-slate-200">{deal.name}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{deal.value ? "$"+deal.value.toLocaleString() : "-"} - {deal.status}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{deal.value ? "$"+deal.value.toLocaleString() : "-"} — {deal.status}</div>
                 </div>
                 {deal.expectedCloseDate && <div className="text-xs text-slate-600 flex items-center gap-1"><Calendar className="w-3 h-3"/>{new Date(deal.expectedCloseDate).toLocaleDateString()}</div>}
               </div>

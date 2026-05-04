@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-import { eq, and, desc, like, sql, count } from "drizzle-orm";
+import { eq, and, desc, like, sql, count, gte } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { withWorkspace } from "@/lib/middleware";
 
@@ -7,8 +7,10 @@ import { withWorkspace } from "@/lib/middleware";
 export async function GET(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // ── COUNTS ──
     const [contactCount] = await db
       .select({ value: count() })
       .from(schema.contacts)
@@ -27,23 +29,84 @@ export async function GET(req: NextRequest) {
     const [wonDeals] = await db
       .select({ value: sql`COALESCE(SUM(${schema.deals.value}), 0)` })
       .from(schema.deals)
-      .where(
-        and(
-          eq(schema.deals.workspaceId, workspaceId),
-          eq(schema.deals.status, "won")
-        )
-      );
+      .where(and(eq(schema.deals.workspaceId, workspaceId), eq(schema.deals.status, "won")));
 
     const [openDeals] = await db
       .select({ value: sql`COALESCE(SUM(${schema.deals.value}), 0)` })
       .from(schema.deals)
-      .where(
-        and(
-          eq(schema.deals.workspaceId, workspaceId),
-          eq(schema.deals.status, "open")
-        )
-      );
+      .where(and(eq(schema.deals.workspaceId, workspaceId), eq(schema.deals.status, "open")));
 
+    const wonDealsValue = Number(wonDeals?.value ?? 0);
+    const openDealsValue = Number(openDeals?.value ?? 0);
+
+    // ── MONTHLY REVENUE (last 12 months, open+won deals) ──
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const monthlyRows = await db
+      .select({
+        month: sql`strftime('%Y-%m', ${schema.deals.createdAt} / 1000, 'unixepoch')`,
+        total: sql`COALESCE(SUM(${schema.deals.value}), 0)`,
+      })
+      .from(schema.deals)
+      .where(and(
+        eq(schema.deals.workspaceId, workspaceId),
+        gte(schema.deals.createdAt, twelveMonthsAgo),
+        sql`${schema.deals.status} IN ('open', 'won')`
+      ))
+      .groupBy(sql`strftime('%Y-%m', ${schema.deals.createdAt} / 1000, 'unixepoch')`)
+      .orderBy(sql`strftime('%Y-%m', ${schema.deals.createdAt} / 1000, 'unixepoch')`);
+
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthlyMap = new Map<string, number>();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      monthlyMap.set(key, 0);
+    }
+    for (const row of monthlyRows as any[]) {
+      monthlyMap.set(row.month, Number(row.total) || 0);
+    }
+    const chartData = Array.from(monthlyMap.entries()).map(([month, revenue]) => {
+      const [y, m] = month.split("-");
+      return { name: monthNames[Number(m)-1], revenue };
+    });
+
+    // Get the default pipeline first
+    const [defaultPipeline] = await db
+      .select()
+      .from(schema.pipelines)
+      .where(and(eq(schema.pipelines.workspaceId, workspaceId), eq(schema.pipelines.isDefault, true)))
+      .limit(1);
+
+    let pipelineData: { name: string; value: number }[] = [];
+    if (defaultPipeline) {
+      const stageRows = await db
+        .select({
+          stageId: schema.deals.stageId,
+          total: sql`COALESCE(SUM(${schema.deals.value}), 0)`,
+        })
+        .from(schema.deals)
+        .where(and(eq(schema.deals.workspaceId, workspaceId), eq(schema.deals.status, "open")))
+        .groupBy(schema.deals.stageId);
+
+      const stagesMap = new Map<string, string>();
+      const allStages = await db
+        .select()
+        .from(schema.pipelineStages)
+        .where(eq(schema.pipelineStages.pipelineId, defaultPipeline.id));
+      for (const s of allStages) stagesMap.set(s.id, s.name);
+
+      pipelineData = stageRows.map((r) => ({
+        name: stagesMap.get(r.stageId ?? "") ?? "Unknown",
+        value: Number(r.total) || 0,
+      }));
+      if (pipelineData.length === 0) {
+        pipelineData = [{ name: "No open deals", value: 1 }];
+      }
+    } else {
+      pipelineData = [{ name: "No pipeline", value: 1 }];
+    }
+
+    // ── RECENT LISTS ──
     const recentDeals = await db
       .select()
       .from(schema.deals)
@@ -66,6 +129,8 @@ export async function GET(req: NextRequest) {
         revenueWon: Number(Object.values(wonDeals)[0]) ?? 0,
         revenueOpen: Number(Object.values(openDeals)[0]) ?? 0,
       },
+      monthlyRevenue: chartData,
+      pipelineDistribution: pipelineData,
       deals: recentDeals,
       activities: recentActivities,
     });
