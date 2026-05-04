@@ -20,6 +20,7 @@ import {
   Briefcase,
   Zap,
   Tag,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const nav = [
   { label: "Tasks", icon: CheckSquare, href: "/tasks" },
   { label: "Activities", icon: Activity, href: "/activities" },
   { label: "Tags", icon: Tag, href: "/tags" },
+  { label: "Emails", icon: Mail, href: "/emails" },
   { label: "Integrations", icon: Zap, href: "/settings/integrations" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
