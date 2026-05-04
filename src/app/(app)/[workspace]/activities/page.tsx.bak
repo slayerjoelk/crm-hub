@@ -71,7 +71,7 @@ export default function ActivitiesPage() {
     e.preventDefault(); setSaving(true); setError(null);
     const body: any = { ...form };
     if (body.durationMinutes) body.durationMinutes = parseInt(body.durationMinutes, 10);
-    if (!body.durationMinutes || isNaN(body.durationMinutes)) body.durationMinutes = undefined;
+    if (body.durationMinutes === NaN) { body.durationMinutes = undefined; }
     const res = await fetch("/api/activities", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const json = await res.json().catch(() => ({ error: "Unknown" }));
     setSaving(false);
