@@ -3,6 +3,20 @@ import { db, schema } from "@/lib/db";
 import { withWorkspace } from "@/lib/middleware";
 import { eq, and } from "drizzle-orm";
 
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withWorkspace(req, async ({ workspaceId }) => {
+    const id = (await params).id;
+    const [item] = await db.select().from(schema.contacts).where(and(eq(schema.contacts.id, id), eq(schema.contacts.workspaceId, workspaceId)));
+    if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    let company = null;
+    if (item.companyId) {
+      const [c] = await db.select().from(schema.companies).where(eq(schema.companies.id, item.companyId));
+      company = c ?? null;
+    }
+    return NextResponse.json({ data: { ...item, company } });
+  });
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const id = (await params).id;
