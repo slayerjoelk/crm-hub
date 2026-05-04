@@ -7,10 +7,60 @@ import { withWorkspace } from "@/lib/middleware";
 export async function GET(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    // ── COUNTS ──
+    // ── COUNT HELPERS ──
+    function countBetween(table: any, col: any, from: Date, to: Date) {
+      return db
+        .select({ value: count() })
+        .from(table)
+        .where(and(
+          eq(col, workspaceId),
+          gte(table.createdAt, from),
+          sql`${table.createdAt} < ${to}`
+        ));
+    }
+
+    function sumBetween(from: Date, to: Date) {
+      return db
+        .select({ value: sql`COALESCE(SUM(${schema.deals.value}), 0)` })
+        .from(schema.deals)
+        .where(and(
+          eq(schema.deals.workspaceId, workspaceId),
+          eq(schema.deals.status, "won"),
+          gte(schema.deals.createdAt, from),
+          sql`${schema.deals.createdAt} < ${to}`
+        ));
+    }
+
+    // This month counts
+    const [[contactsThisMonth], [companiesThisMonth], [dealsThisMonth], [revenueThisMonth]] = await Promise.all([
+      countBetween(schema.contacts, schema.contacts.workspaceId, startOfMonth, now),
+      countBetween(schema.companies, schema.companies.workspaceId, startOfMonth, now),
+      countBetween(schema.deals, schema.deals.workspaceId, startOfMonth, now),
+      sumBetween(startOfMonth, now),
+    ]);
+
+    // Last month counts
+    const [[contactsLastMonth], [companiesLastMonth], [dealsLastMonth], [revenueLastMonth]] = await Promise.all([
+      countBetween(schema.contacts, schema.contacts.workspaceId, startOfLastMonth, startOfMonth),
+      countBetween(schema.companies, schema.companies.workspaceId, startOfLastMonth, startOfMonth),
+      countBetween(schema.deals, schema.deals.workspaceId, startOfLastMonth, startOfMonth),
+      sumBetween(startOfLastMonth, startOfMonth),
+    ]);
+
+    const pct = (thisVal: number, lastVal: number) =>
+      lastVal === 0 ? (thisVal > 0 ? 100 : 0) : Math.round(((thisVal - lastVal) / lastVal) * 100);
+
+    const trends = {
+      contacts: pct(Number(contactsThisMonth.value ?? 0), Number(contactsLastMonth.value ?? 0)),
+      companies: pct(Number(companiesThisMonth.value ?? 0), Number(companiesLastMonth.value ?? 0)),
+      deals: pct(Number(dealsThisMonth.value ?? 0), Number(dealsLastMonth.value ?? 0)),
+      revenue: pct(Number(Object.values(revenueThisMonth as any)[0] ?? 0), Number(Object.values(revenueLastMonth as any)[0] ?? 0)),
+    };
+
+    // ── TOTAL COUNTS ──
     const [contactCount] = await db
       .select({ value: count() })
       .from(schema.contacts)
@@ -129,6 +179,7 @@ export async function GET(req: NextRequest) {
         revenueWon: Number(Object.values(wonDeals)[0]) ?? 0,
         revenueOpen: Number(Object.values(openDeals)[0]) ?? 0,
       },
+      trends,
       monthlyRevenue: chartData,
       pipelineDistribution: pipelineData,
       deals: recentDeals,

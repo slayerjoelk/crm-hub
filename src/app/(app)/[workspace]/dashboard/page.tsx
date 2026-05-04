@@ -40,10 +40,10 @@ export default function DashboardPage() {
       <div><h1 className="text-2xl font-bold text-white">Dashboard</h1><p className="text-slate-500 text-sm mt-1">Overview of your CRM</p></div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard title="Contacts" value={data?.stats?.contacts ?? "-"} icon={Users} trend={12} color="#3b82f6" />
-        <KpiCard title="Companies" value={data?.stats?.companies ?? "-"} icon={Building2} trend={8} color="#8b5cf6" />
-        <KpiCard title="Deals" value={data?.stats?.deals ?? "-"} icon={BarChart3} trend={-3} color="#f59e0b" />
-        <KpiCard title="Revenue (Closed)" value={data ? "$" + (data.stats?.revenueWon ?? 0).toLocaleString() : "-"} icon={DollarSign} trend={24} color="#10b981" />
+        <KpiCard title="Contacts" value={data?.stats?.contacts ?? "-"} icon={Users} trend={data?.trends?.contacts ?? 0} color="#3b82f6" />
+        <KpiCard title="Companies" value={data?.stats?.companies ?? "-"} icon={Building2} trend={data?.trends?.companies ?? 0} color="#8b5cf6" />
+        <KpiCard title="Deals" value={data?.stats?.deals ?? "-"} icon={BarChart3} trend={data?.trends?.deals ?? 0} color="#f59e0b" />
+        <KpiCard title="Revenue (Closed)" value={data ? "$" + (data.stats?.revenueWon ?? 0).toLocaleString() : "-"} icon={DollarSign} trend={data?.trends?.revenue ?? 0} color="#10b981" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
