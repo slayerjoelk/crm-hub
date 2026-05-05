@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { hashPassword, createToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function POST(req: NextRequest) {
+async function registerHandler(req: NextRequest) {
   try {
     const { email, password, name, workspaceSlug, workspaceName } = await req.json();
 
@@ -83,3 +84,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }
+
+export const POST = withRateLimit(registerHandler, { keyPrefix: "register", windowMs: 5 * 60 * 1000, maxRequests: 5 });

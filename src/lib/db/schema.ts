@@ -399,6 +399,17 @@ invitedBy: text("invited_by").notNull().references(() => users.id, { onDelete: "
 expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
 createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
+// ── NOTIFICATIONS ────────────────────────────────────────────
+export const notifications = sqliteTable("notifications", {
+id: text("id").notNull().unique().$defaultFn(createId),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+type: text("type", { enum: ["deal", "task", "contact", "company", "system"] }).notNull(),
+title: text("title").notNull(),
+body: text("body"),
+read: integer("read", { mode: "boolean" }).default(false),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
 // ── ACTIVITY LOGS (system-wide audit) ───────────────────
 export const auditLogs = sqliteTable("audit_logs", {
 id: text("id").notNull().unique().$defaultFn(createId),

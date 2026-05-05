@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CommandPalette } from "@/components/crm/command-palette";
@@ -22,15 +22,54 @@ const nav = [
   { label: "Emails", icon: Mail, href: "/emails" },
   { label: "Sequences", icon: FolderOpen, href: "/sequences" },
   { label: "Import", icon: Upload, href: "/import" },
+  { label: "Analytics", icon: BarChart3, href: "/analytics" },
   { label: "Integrations", icon: Zap, href: "/settings/integrations" },
+  { label: "Team", icon: Users, href: "/settings/team" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
 export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: string; user: any; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch("/api/notifications");
+      if (!res.ok) return;
+      const json = await res.json();
+      setNotifications(json.data ?? []);
+    } catch { /* ignore */ }
+  }
+
+  async function markRead(id: string) {
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, read: true }),
+    });
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  }
+
+  useEffect(() => {
+    loadNotifications();
+    const iv = setInterval(loadNotifications, 30_000);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    }
+    if (notifOpen) document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [notifOpen]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -62,7 +101,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
         </div>
         <div className="border-t border-slate-800 p-2">
           <button onClick={()=>setCollapsed(!collapsed)} className="hidden md:flex items-center justify-center w-full h-9 rounded-lg hover:bg-slate-800 text-slate-400"><ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")}/></button>
-          <button onClick={logout} className="flex items-center gap-3 px-3 py-2 mt-1 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-red-400 w-full"><LogOut className="w-4 h-4 shrink-0"/>{!collapsed && <span>Logout</span>}</button>
+          <button onClick={logout} aria-label="Logout" className="flex items-center gap-3 px-3 py-2 mt-1 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-red-400 w-full"><LogOut className="w-4 h-4 shrink-0"/>{!collapsed && <span>Logout</span>}</button>
         </div>
       </aside>
 
@@ -86,7 +125,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
           })}
         </div>
         <div className="border-t border-slate-800 p-3">
-          <button onClick={()=>{ setMobileMenu(false); logout(); }} className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-red-400 w-full"><LogOut className="w-4 h-4 shrink-0"/><span>Logout</span></button>
+          <button onClick={()=>{ setMobileMenu(false); logout(); }} aria-label="Logout" className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-red-400 w-full"><LogOut className="w-4 h-4 shrink-0"/><span>Logout</span></button>
         </div>
       </aside>
 
@@ -99,8 +138,47 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
           </div>
           <div className="flex items-center gap-2 md:gap-3">
             <Link href={`/${workspaceSlug}/contacts/new`} className="hidden md:flex items-center gap-2 h-8 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"><Plus className="w-4 h-4"/>Add Contact</Link>
-            <button className="relative w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400"><Bell className="w-4 h-4"/><span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500"/></button>
-            <div className="flex items-center gap-2">
+            <div className="relative" ref={notifRef}>
+              <button onClick={() => setNotifOpen(v => !v)} className="relative w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400">
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-200">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button onClick={async () => {
+                        await Promise.all(notifications.filter(n => !n.read).map(n => markRead(n.id)));
+                        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                      }} className="text-xs text-emerald-400 hover:text-emerald-300">Mark all read</button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 && (
+                      <div className="px-4 py-6 text-center text-sm text-slate-500">No notifications yet</div>
+                    )}
+                    {notifications.map(n => (
+                      <div key={n.id} onClick={() => { if (!n.read) markRead(n.id); if (n.link) router.push(n.link); }} className={cn("px-4 py-3 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/40", !n.read && "bg-slate-800/20")}>
+                        <div className="flex items-start gap-2">
+                          <span className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0", n.read ? "bg-slate-600" : "bg-emerald-500")} />
+                          <div className="min-w-0">
+                            <div className="text-sm text-slate-200 truncate">{n.title}</div>
+                            <div className="text-xs text-slate-500 truncate">{n.message}</div>
+                            <div className="text-[10px] text-slate-600 mt-0.5">{new Date(n.createdAt).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-slate-800/50 rounded-lg px-2 py-1 transition-colors" onClick={()=>router.push(`/${workspaceSlug}/settings/profile`)}>
               <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-300">{user?.name?.[0]?.toUpperCase?.() ?? "J"}</div>
               <div className="hidden md:block leading-tight"><div className="text-sm text-slate-200">{user?.name ?? "User"}</div><div className="text-xs text-slate-500">{user?.role ?? "Member"}</div></div>
             </div>

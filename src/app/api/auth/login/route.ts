@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function POST(req: NextRequest) {
+async function loginHandler(req: NextRequest) {
   try {
     const { email, password, workspaceSlug } = await req.json();
 
@@ -49,28 +50,18 @@ export async function POST(req: NextRequest) {
       role: user.role,
     });
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await db
-      .insert(schema.sessions)
-      .values({
-        userId: user.id,
-        token,
-        expiresAt,
-      });
-
-    const res = NextResponse.json({ user });
-    res.cookies.set("session", token, {
+    const response = NextResponse.json({ success: true, data: { user } });
+    response.cookies.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
-
-    return res;
-  } catch (err: any) {
-    console.error("Login error:", err?.message || err);
-    console.error("Login error stack:", err?.stack);
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    return response;
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || "Login failed" }, { status: 500 });
   }
 }
+
+export const POST = withRateLimit(loginHandler);

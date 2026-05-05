@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { withWorkspace } from "@/lib/middleware";
 import { eq, or, like, desc, sql, and } from "drizzle-orm";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function POST(req: NextRequest) {
+async function searchHandler(req: NextRequest) {
   return withWorkspace(req, async ({ workspaceId }) => {
     try {
       const { q } = await req.json();
@@ -46,3 +47,5 @@ export async function POST(req: NextRequest) {
     }
   });
 }
+
+export const POST = withRateLimit(searchHandler);

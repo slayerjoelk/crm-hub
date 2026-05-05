@@ -27,7 +27,9 @@ function normalizeHeaders(headers: string[]): string[] {
   return headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+import { withRateLimit } from "@/lib/rate-limit";
+
+export const POST = withRateLimit(async function importHandler(req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
   const type = (await params).type;
   return withWorkspace(req, async ({ workspaceId }) => {
     const body = await req.json();
@@ -108,4 +110,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
     }
     return NextResponse.json({ imported: results.length, errors: errors.length > 0 ? errors : undefined, data: results.slice(0, 5) });
   });
-}
+});
