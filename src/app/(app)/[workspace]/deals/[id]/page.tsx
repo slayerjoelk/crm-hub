@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, FileText, Pencil, Trash2, X, AlertTriangle, Tag } from "lucide-react";
+import { ArrowLeft, Briefcase, DollarSign, Calendar, User, Building2, BarChart3, Clock, Activity, FileText, Pencil, Trash2, X, AlertTriangle, Tag, Plus } from "lucide-react";
 import { TagManager } from "@/components/tag-manager";
+import { LogActivityModal } from "@/components/crm/log-activity-modal";
 
 const TAB_STYLE = "px-4 py-2.5 text-sm font-medium transition-colors relative";
 const TAB_ACTIVE = "text-emerald-400";
@@ -35,6 +36,7 @@ export default function DealDetailPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+  const [showLogActivity, setShowLogActivity] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -169,9 +171,16 @@ export default function DealDetailPage() {
       )}
 
       {tab === "activity" && (
-        <div className="space-y-3">
+        <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Activity size={16} className="text-[#2B6ED2]" /> Activity Timeline</h3>
+            <button onClick={() => setShowLogActivity(true)} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 flex items-center gap-1.5 transition-colors">
+              <Plus className="w-3.5 h-3.5" /> Log Activity
+            </button>
+          </div>
           {activities.length === 0 && <div className="text-center text-slate-600 py-12 text-sm">No activity yet</div>}
-          {activities.map((a, i) => (
+          <div className="space-y-3">
+            {activities.map((a, i) => (
             <div key={a.id || i} className="flex gap-4 items-start rounded-xl border border-slate-800 bg-slate-900/40 p-4">
               {activityIcon(a.type)}
               <div className="flex-1 min-w-0">
@@ -181,6 +190,7 @@ export default function DealDetailPage() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -251,6 +261,16 @@ export default function DealDetailPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* Log Activity Modal */}
+      {showLogActivity && deal && (
+        <LogActivityModal
+          entityType="deal"
+          entityId={id}
+          entityName={deal.name}
+          onClose={() => setShowLogActivity(false)}
+          onCreated={load}
+        />
       )}
     </div>
   );

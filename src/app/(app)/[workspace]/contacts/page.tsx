@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, User, X } from "lucide-react";
+import { Plus, User, X, Download } from "lucide-react";
 import { DataTable } from "@/components/crm/data-table";
+import { CsvExportButton } from "@/components/crm/csv-export-button";
+import { CustomFieldsSection } from "@/components/crm/custom-fields-section";
 
 export default function ContactsPage() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function ContactsPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ firstName:"",lastName:"",email:"",phone:"",jobTitle:"",lifecycleStage:"subscriber",leadStatus:"new",sourceType:"other",companyId:"" });
   const [error, setError] = useState<string|null>(null);
+  const [customValues, setCustomValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/contacts").then(r=>r.json()).then(r=>setContacts(r.data??[]));
@@ -27,7 +30,14 @@ export default function ContactsPage() {
     if (!res.ok) { setError(json.error||"Failed to create contact"); return; }
     setShowModal(false);
     setForm({firstName:"",lastName:"",email:"",phone:"",jobTitle:"",lifecycleStage:"subscriber",leadStatus:"new",sourceType:"other",companyId:""});
+    setCustomValues({});
     setContacts(prev=>[json.data,...prev]);
+    if (Object.keys(customValues).length > 0) {
+      await fetch(`/api/custom-values/contact/${json.data.id}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customValues),
+      });
+    }
   }
 
   const inputCls = "w-full h-10 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
@@ -52,7 +62,36 @@ export default function ContactsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-white">Contacts</h1><p className="text-slate-500 text-sm mt-1">Manage your leads and customers</p></div>
-        <button onClick={()=>setShowModal(true)} className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"><Plus className="w-4 h-4"/> New Contact</button>
+        <div className="flex items-center gap-2">
+          <CsvExportButton
+            data={contacts.map(c => ({
+              id: c.id,
+              name: `${c.firstName || ""} ${c.lastName || ""}`.trim(),
+              email: c.email || "",
+              phone: c.phone || "",
+              jobTitle: c.jobTitle || "",
+              company: c.companyName || "",
+              lifecycleStage: c.lifecycleStage || "",
+              leadStatus: c.leadStatus || "",
+              sourceType: c.sourceType || "",
+              createdAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
+            }))}
+            filename={`contacts_${new Date().toISOString().slice(0,10)}`}
+            columns={[
+              { key: "id", label: "ID" },
+              { key: "name", label: "Name" },
+              { key: "email", label: "Email" },
+              { key: "phone", label: "Phone" },
+              { key: "jobTitle", label: "Job Title" },
+              { key: "company", label: "Company" },
+              { key: "lifecycleStage", label: "Lifecycle" },
+              { key: "leadStatus", label: "Lead Status" },
+              { key: "sourceType", label: "Source" },
+              { key: "createdAt", label: "Created" },
+            ]}
+          />
+          <button onClick={()=>setShowModal(true)} className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"><Plus className="w-4 h-4"/> New Contact</button>
+        </div>
       </div>
 
       <DataTable
@@ -104,6 +143,7 @@ export default function ContactsPage() {
                   {companies.map((c:any)=><option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>)}
                 </select>
               </div>
+              <CustomFieldsSection entityType="contact" mode="form" onChange={setCustomValues} />
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={()=>setShowModal(false)} className="h-9 px-4 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800">Cancel</button>
                 <button type="submit" disabled={saving} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2">{saving && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>} Create</button>

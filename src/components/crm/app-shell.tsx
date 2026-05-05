@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, BarChart3, CheckSquare, Activity, Settings, LogOut,
   ChevronLeft, ChevronRight, Plus, Search, Bell, Briefcase, Tag, Mail, FolderOpen, Zap, Upload,
-  Menu, X, Home
+  Menu, X, Home, KanbanSquare
 } from "lucide-react";
 
 const nav = [
@@ -16,6 +16,7 @@ const nav = [
   { label: "Contacts", icon: Users, href: "/contacts" },
   { label: "Companies", icon: Building2, href: "/companies" },
   { label: "Deals", icon: BarChart3, href: "/deals" },
+  { label: "Pipelines", icon: KanbanSquare, href: "/pipelines" },
   { label: "Tasks", icon: CheckSquare, href: "/tasks" },
   { label: "Activities", icon: Activity, href: "/activities" },
   { label: "Tags", icon: Tag, href: "/tags" },

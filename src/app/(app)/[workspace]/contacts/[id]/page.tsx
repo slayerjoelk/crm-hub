@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Mail, Phone, User, Building2, Activity, DollarSign, ListChecks, Clock, Mail as MailIcon, FileText, Phone as PhoneIcon, CalendarDays, MessageCircle, CheckSquare, TrendingUp, TrendingDown, Tag, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Mail, Phone, User, Building2, Activity, DollarSign, ListChecks, Clock, Mail as MailIcon, FileText, Phone as PhoneIcon, CalendarDays, MessageCircle, CheckSquare, TrendingUp, TrendingDown, Tag, Pencil, Trash2, X, AlertTriangle, Plus } from "lucide-react";
 import { TagManager } from "@/components/tag-manager";
+import { LogActivityModal } from "@/components/crm/log-activity-modal";
+import { CustomFieldsSection } from "@/components/crm/custom-fields-section";
 
 const TYPE_ICON: Record<string, any> = { email: MailIcon, call: PhoneIcon, meeting: CalendarDays, note: FileText, task: CheckSquare, deal_created: TrendingUp, deal_won: TrendingUp, deal_lost: TrendingDown, deal_stage_changed: Activity, deal_updated: Activity, system: MessageCircle, contact_created: User, contact_updated: User, company_created: Building2, company_updated: Building2, integration: MessageCircle };
 
@@ -38,6 +40,8 @@ export default function ContactDetailPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+const [customValues, setCustomValues] = useState<Record<string, string>>({});
+const [showLogActivity, setShowLogActivity] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -84,6 +88,13 @@ export default function ContactDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editForm),
     });
+    if (res.ok && Object.keys(customValues).length > 0) {
+      await fetch(`/api/custom-values/contact/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customValues),
+      });
+    }
     setSaving(false);
     if (res.ok) { setShowEdit(false); load(); }
   }
@@ -169,6 +180,7 @@ export default function ContactDetailPage() {
                   <div key={label}><span className="text-xs text-slate-500">{label}</span><p className="font-medium text-slate-200">{value || "—"}</p></div>
                 ))}
               </div>
+              <CustomFieldsSection entityType="contact" entityId={id} mode="display" />
             </div>
             <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-6 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Activity size={16} className="text-[#2B6ED2]" /> Summary</h3>
@@ -183,8 +195,13 @@ export default function ContactDetailPage() {
         )}
 
         {tab === "activity" && (
-          <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-6">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Activity size={16} className="text-[#2B6ED2]" /> Activity Timeline</h3>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Activity size={16} className="text-[#2B6ED2]" /> Activity Timeline</h3>
+              <button onClick={() => setShowLogActivity(true)} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 flex items-center gap-1.5 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Log Activity
+              </button>
+            </div>
             {activities.length === 0 ? (
               <div className="text-center py-12 text-slate-500"><Activity size={32} className="mx-auto mb-2 opacity-50"/><p>No activity yet</p></div>
             ) : (
@@ -276,6 +293,7 @@ export default function ContactDetailPage() {
                 <div><label className={labelCls}>Lifecycle stage</label><select value={editForm.lifecycleStage || ""} onChange={e => setEditForm({...editForm, lifecycleStage: e.target.value})} className={inputCls}><option value="subscriber">Subscriber</option><option value="lead">Lead</option><option value="opportunity">Opportunity</option><option value="customer">Customer</option><option value="evangelist">Evangelist</option><option value="other">Other</option></select></div>
                 <div><label className={labelCls}>Lead status</label><select value={editForm.leadStatus || ""} onChange={e => setEditForm({...editForm, leadStatus: e.target.value})} className={inputCls}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="unqualified">Unqualified</option></select></div>
               </div>
+              <CustomFieldsSection entityType="contact" entityId={id} mode="form" onChange={setCustomValues} />
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowEdit(false)} className="h-9 px-4 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
                 <button type="submit" disabled={saving} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
@@ -298,6 +316,16 @@ export default function ContactDetailPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* Log Activity Modal */}
+      {showLogActivity && contact && (
+        <LogActivityModal
+          entityType="contact"
+          entityId={id}
+          entityName={`${contact.firstName || ""} ${contact.lastName || ""}`.trim()}
+          onClose={() => setShowLogActivity(false)}
+          onCreated={load}
+        />
       )}
     </div>
   );

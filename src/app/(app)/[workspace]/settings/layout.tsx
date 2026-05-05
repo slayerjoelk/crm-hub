@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
-import { User, Users, Puzzle, SlidersHorizontal } from "lucide-react";
+import { User, Users, Puzzle, SlidersHorizontal, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -11,6 +11,7 @@ const TABS = [
   { href: "/profile", label: "Profile", icon: User },
   { href: "/team", label: "Team", icon: Users },
   { href: "/integrations", label: "Integrations", icon: Puzzle },
+  { href: "/custom-fields", label: "Custom Fields", icon: Database },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

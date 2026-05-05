@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DollarSign, Calendar, MoreHorizontal, Plus, X, Building2, ChevronDown, User, Clock, ArrowUpRight, Tag } from "lucide-react";
+import { DollarSign, Calendar, MoreHorizontal, Plus, X, Building2, ChevronDown, User, Clock, ArrowUpRight, Tag, Download } from "lucide-react";
+import { CsvExportButton } from "@/components/crm/csv-export-button";
 
 export default function DealsPage() {
   const router = useRouter();
@@ -105,7 +106,42 @@ export default function DealsPage() {
           </div>
           <p className="text-slate-500 text-sm mt-1">{filteredDeals.length} deals · {formatCurrency(totalValue)} total pipeline</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors"><Plus className="w-4 h-4 inline mr-1"/> Add Deal</button>
+        <div className="flex items-center gap-2">
+          <CsvExportButton
+            data={filteredDeals.map(d => ({
+              id: d.id,
+              name: d.name || "",
+              value: d.value || 0,
+              currency: d.currency || "USD",
+              stage: d.stageName || stages.find((s:any)=>s.id===d.stageId)?.name || "",
+              pipeline: pipeline?.name || "",
+              status: d.status || "",
+              priority: d.priority || "",
+              probability: d.probability || 0,
+              expectedCloseDate: d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString() : "",
+              primaryContact: d.primaryContactName || "",
+              company: d.companyName || "",
+              createdAt: d.createdAt ? new Date(d.createdAt).toLocaleString() : "",
+            }))}
+            filename={`deals_${new Date().toISOString().slice(0,10)}`}
+            columns={[
+              { key: "id", label: "ID" },
+              { key: "name", label: "Name" },
+              { key: "value", label: "Value" },
+              { key: "currency", label: "Currency" },
+              { key: "stage", label: "Stage" },
+              { key: "pipeline", label: "Pipeline" },
+              { key: "status", label: "Status" },
+              { key: "priority", label: "Priority" },
+              { key: "probability", label: "Probability" },
+              { key: "expectedCloseDate", label: "Expected Close" },
+              { key: "primaryContact", label: "Primary Contact" },
+              { key: "company", label: "Company" },
+              { key: "createdAt", label: "Created" },
+            ]}
+          />
+          <button onClick={() => setShowModal(true)} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors"><Plus className="w-4 h-4 inline mr-1"/> Add Deal</button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2">
