@@ -15,7 +15,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     async function check() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) { router.push("/login"); return; }
         const json = await res.json();
         setUser(json.data);
@@ -30,8 +30,8 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-950">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="h-screen flex items-center justify-center bg-[#08090a]">
+        <div className="w-8 h-8 border-2 border-[#5e6ad2] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

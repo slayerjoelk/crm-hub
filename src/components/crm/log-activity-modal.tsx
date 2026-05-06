@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X, Activity, Phone, Mail, CalendarDays, FileText, CheckSquare, Clock } from "lucide-react";
 
 interface Props {
-  entityType: "contact" | "deal" | "company";
+  entityType: "contact" | "deal" | "company" | "task";
   entityId: string;
   entityName?: string;
   onClose: () => void;
@@ -19,8 +19,8 @@ const TYPES = [
   { value: "task", label: "Task", icon: CheckSquare },
 ] as const;
 
-const inputCls = "w-full h-10 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
-const labelCls = "block text-xs font-medium text-slate-500 mb-1";
+const inputCls = "w-full h-10 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]";
+const labelCls = "block text-xs font-medium text-[#62666d] mb-1";
 
 export function LogActivityModal({ entityType, entityId, entityName, onClose, onCreated }: Props) {
   const [type, setType] = useState<typeof TYPES[number]["value"]>("note");
@@ -43,8 +43,9 @@ export function LogActivityModal({ entityType, entityId, entityName, onClose, on
     if (entityType === "contact") payload.contactId = entityId;
     if (entityType === "deal") payload.dealId = entityId;
     if (entityType === "company") payload.companyId = entityId;
+    if (entityType === "task") payload.taskId = entityId;
 
-    const res = await fetch("/api/activities", {
+    const res = await fetch("/api/activities", { credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -58,21 +59,21 @@ export function LogActivityModal({ entityType, entityId, entityName, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><Activity className="w-4 h-4 text-emerald-400"/></div>
+      <div className="w-full max-w-md rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06]">
+          <div className="w-8 h-8 rounded-lg bg-[#5e6ad2]/10 flex items-center justify-center"><Activity className="w-4 h-4 text-[#10b981]"/></div>
           <h2 className="text-lg font-semibold text-white">Log Activity</h2>
-          <button onClick={onClose} className="ml-auto p-1.5 rounded-lg hover:bg-slate-800 text-slate-500"><X className="w-4 h-4"/></button>
+          <button onClick={onClose} className="ml-auto p-1.5 rounded-lg hover:bg-[#191a1b] text-[#62666d]"><X className="w-4 h-4"/></button>
         </div>
         <form onSubmit={submit} className="p-6 space-y-4">
           {error && <div className="rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-3 py-2">{error}</div>}
-          {entityName && <div className="text-xs text-slate-500">For: <span className="text-slate-300 font-medium">{entityName}</span></div>}
+          {entityName && <div className="text-xs text-[#62666d]">For: <span className="text-[#8a8f98] font-medium">{entityName}</span></div>}
 
           <div className="flex gap-2 flex-wrap">
             {TYPES.map((t) => {
               const Icon = t.icon;
               return (
-                <button type="button" key={t.value} onClick={() => setType(t.value)} className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border transition-colors ${type === t.value ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"}`}
+                <button type="button" key={t.value} onClick={() => setType(t.value)} className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border transition-colors ${type === t.value ? "bg-[#10b981]/[0.12] text-[#10b981] border-emerald-500/30" : "bg-[#191a1b] text-[#8a8f98] border-white/[0.06] hover:bg-[#28282c]"}`}
                 >
                   <Icon className="w-3.5 h-3.5" />{t.label}
                 </button>
@@ -91,8 +92,8 @@ export function LogActivityModal({ entityType, entityId, entityName, onClose, on
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="h-9 px-4 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving || !body.trim()} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50">{saving ? "Saving..." : "Log Activity"}</button>
+            <button type="button" onClick={onClose} className="h-9 px-4 rounded-lg bg-[#191a1b] text-[#8a8f98] text-sm font-medium hover:bg-[#28282c] transition-colors">Cancel</button>
+            <button type="submit" disabled={saving || !body.trim()} className="h-9 px-4 rounded-lg bg-[#5e6ad2] text-white text-sm font-medium hover:bg-[#5e6ad2] transition-colors disabled:opacity-50">{saving ? "Saving..." : "Log Activity"}</button>
           </div>
         </form>
       </div>

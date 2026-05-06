@@ -16,18 +16,18 @@ const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 function Kpi({ title, value, icon: Icon, trend, suffix = "" }: any) {
   const up = trend >= 0;
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+    <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
       <div className="flex items-center justify-between mb-3">
-        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><Icon className="w-5 h-5" /></div>
+        <div className="w-10 h-10 rounded-lg bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center"><Icon className="w-5 h-5" /></div>
         {trend !== undefined && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
+          <div className={`flex items-center gap-1 text-xs font-medium ${up ? "text-[#10b981]" : "text-red-400"}`}>
             {up ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             {Math.abs(trend)}%
           </div>
         )}
       </div>
-      <div className="text-2xl font-bold text-slate-100">{value}{suffix}</div>
-      <div className="text-xs text-slate-500 mt-0.5">{title}</div>
+      <div className="text-2xl font-bold text-[#f7f8f8]">{value}{suffix}</div>
+      <div className="text-xs text-[#62666d] mt-0.5">{title}</div>
     </div>
   );
 }
@@ -57,8 +57,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-slate-500 text-sm mt-1">Deep insights into your pipeline and contacts</p>
+        <h1 className="text-2xl font-bold text-[#f7f8f8]">Analytics</h1>
+        <p className="text-[#62666d] text-sm mt-1">Deep insights into your pipeline and contacts</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -69,8 +69,8 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Revenue Trend</h3>
+        <div className="lg:col-span-2 rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Revenue Trend</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={mt}>
@@ -85,8 +85,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Pipeline Distribution</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Pipeline Distribution</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -102,8 +102,8 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Contact Source Breakdown</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Contact Source Breakdown</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.sourceBreakdown ?? []}>
@@ -117,8 +117,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Lifecycle Stage Breakdown</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Lifecycle Stage Breakdown</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.lifecycleBreakdown ?? []}>
@@ -133,21 +133,21 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-        <h3 className="text-sm font-semibold text-slate-200 mb-4">Top Won Deals</h3>
+      <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+        <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Top Won Deals</h3>
         <div className="space-y-2">
           {(data?.topDeals ?? []).map((d: any) => (
             <button key={d.id} onClick={() => router.push(`./deals/${d.id}`)}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors text-left">
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors text-left">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><DollarSign className="w-4 h-4" /></div>
-                <div className="text-sm font-medium text-slate-200">{d.name}</div>
+                <div className="w-8 h-8 rounded-lg bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center"><DollarSign className="w-4 h-4" /></div>
+                <div className="text-sm font-medium text-[#d0d6e0]">{d.name}</div>
               </div>
-              <div className="text-sm font-semibold text-emerald-400">{d.currency} {d.value?.toLocaleString()}</div>
+              <div className="text-sm font-semibold text-[#10b981]">{d.currency} {d.value?.toLocaleString()}</div>
             </button>
           ))}
           {(!data?.topDeals || data.topDeals.length === 0) && (
-            <div className="text-center text-sm text-slate-600 py-8">No won deals yet.</div>
+            <div className="text-center text-sm text-[#62666d] py-8">No won deals yet.</div>
           )}
         </div>
       </div>

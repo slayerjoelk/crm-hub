@@ -101,7 +101,7 @@ export default function SequencesPage() {
   async function createSequence(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch("/api/sequences", {
+      const res = await fetch("/api/sequences", { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: seqName, description: seqDesc, type: seqType }),
@@ -122,7 +122,7 @@ export default function SequencesPage() {
   async function toggleStatus(id: string, current: string) {
     const next = current === "active" ? "paused" : "active";
     try {
-      const res = await fetch(`/api/sequences/${id}`, {
+      const res = await fetch(`/api/sequences/${id}`, { credentials: "include",
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
@@ -156,7 +156,7 @@ export default function SequencesPage() {
     e.preventDefault();
     if (!detailId || !stepSubject.trim()) return;
     try {
-      const res = await fetch(`/api/sequences/${detailId}/steps`, {
+      const res = await fetch(`/api/sequences/${detailId}/steps`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -190,7 +190,7 @@ export default function SequencesPage() {
     if (!detailId || !enrollContactId) return;
     setEnrolling(true);
     try {
-      const res = await fetch(`/api/sequences/${detailId}/enroll`, {
+      const res = await fetch(`/api/sequences/${detailId}/enroll`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactIds: [enrollContactId] }),
@@ -223,7 +223,7 @@ export default function SequencesPage() {
     if (!detailId) return;
     setUnenrolling(true);
     try {
-      const res = await fetch(`/api/sequences/${detailId}/enroll`, {
+      const res = await fetch(`/api/sequences/${detailId}/enroll`, { credentials: "include",
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enrollmentId }),
@@ -257,16 +257,16 @@ export default function SequencesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
-            <Mail className="w-6 h-6 text-emerald-400" /> Sequences
+          <h1 className="text-2xl font-semibold text-[#f7f8f8] flex items-center gap-2">
+            <Mail className="w-6 h-6 text-[#10b981]" /> Sequences
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-[#8a8f98] mt-1">
             Email drip campaigns with step builder.
           </p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors"
+          className="flex items-center gap-2 h-9 px-4 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] transition-colors"
         >
           <Plus className="w-4 h-4" /> New Sequence
         </button>
@@ -277,7 +277,7 @@ export default function SequencesPage() {
           <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : sequences.length === 0 ? (
-        <div className="text-center py-16 text-slate-500">
+        <div className="text-center py-16 text-[#62666d]">
           <Mail className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">No sequences yet. Create your first drip campaign.</p>
         </div>
@@ -286,28 +286,28 @@ export default function SequencesPage() {
           {sequences.map((s) => (
             <div
               key={s.id}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-4 hover:border-slate-700 transition-colors cursor-pointer"
+              className="bg-[#0f1011] border border-white/[0.06] rounded-xl p-4 flex items-center gap-4 hover:border-white/[0.06] transition-colors cursor-pointer"
               onClick={() => openDetail(s.id)}
             >
-              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4 text-slate-400" />
+              <div className="w-10 h-10 rounded-full bg-[#191a1b] flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-[#8a8f98]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white">{s.name}</span>
+                  <span className="text-sm font-medium text-[#f7f8f8]">{s.name}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
                       s.status === "active"
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-[#10b981]/[0.12] text-[#10b981] border-emerald-500/20"
                         : s.status === "paused"
                         ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        : "bg-slate-700/50 text-slate-400 border-slate-700"
+                        : "bg-[#28282c]/50 text-[#8a8f98] border-white/[0.06]"
                     }`}
                   >
                     {s.status}
                   </span>
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">
+                <div className="text-xs text-[#8a8f98] mt-0.5">
                   {s.stepCount} step{s.stepCount === 1 ? "" : "s"} · {s.enrolledCount}{" "}
                   enrolled · {s.sentCount} sent
                 </div>
@@ -321,7 +321,7 @@ export default function SequencesPage() {
                   className={`p-2 rounded-lg text-sm font-medium flex items-center gap-1.5 ${
                     s.status === "active"
                       ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                      : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                      : "bg-[#10b981]/[0.12] text-[#10b981] hover:bg-[#5e6ad2]/20"
                   }`}
                 >
                   {s.status === "active" ? (
@@ -331,7 +331,7 @@ export default function SequencesPage() {
                   )}
                   {s.status === "active" ? "Pause" : "Run"}
                 </button>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
+                <ChevronRight className="w-4 h-4 text-[#62666d]" />
               </div>
             </div>
           ))}
@@ -345,44 +345,44 @@ export default function SequencesPage() {
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-              <h2 className="text-sm font-semibold text-white">New Sequence</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[#f7f8f8]">New Sequence</h2>
               <button
                 onClick={() => setModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400"
+                className="p-1.5 rounded-lg hover:bg-[#191a1b] text-[#8a8f98]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={createSequence} className="p-5 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">Name</label>
+                <label className="block text-xs font-medium text-[#8a8f98]">Name</label>
                 <input
                   value={seqName}
                   onChange={(e) => setSeqName(e.target.value)}
                   required
-                  className="w-full h-9 px-3 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                  className="w-full h-9 px-3 rounded-lg bg-[#08090a] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                   placeholder="e.g. Cold Outreach Q3"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">Description</label>
+                <label className="block text-xs font-medium text-[#8a8f98]">Description</label>
                 <input
                   value={seqDesc}
                   onChange={(e) => setSeqDesc(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                  className="w-full h-9 px-3 rounded-lg bg-[#08090a] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                   placeholder="Optional..."
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">Type</label>
+                <label className="block text-xs font-medium text-[#8a8f98]">Type</label>
                 <select
                   value={seqType}
                   onChange={(e) => setSeqType(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none"
+                  className="w-full h-9 px-3 rounded-lg bg-[#08090a] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none"
                 >
                   <option value="cold_outreach">Cold Outreach</option>
                   <option value="nurture">Nurture</option>
@@ -395,13 +395,13 @@ export default function SequencesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="h-9 px-4 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-800"
+                  className="h-9 px-4 rounded-lg border border-white/[0.06] text-[#8a8f98] text-sm hover:bg-[#191a1b]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+                  className="h-9 px-4 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2]"
                 >
                   Create
                 </button>
@@ -418,20 +418,20 @@ export default function SequencesPage() {
           onClick={() => setDetailId(null)}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-2xl rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] sticky top-0 bg-[#0f1011] z-10">
               <div>
-                <h2 className="text-sm font-semibold text-white">{detailSeq.name}</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="text-sm font-semibold text-[#f7f8f8]">{detailSeq.name}</h2>
+                <p className="text-xs text-[#62666d]">
                   {detailSeq.description || detailSeq.type} · {detailSeq.stepCount} steps ·{" "}
                   {detailSeq.enrolledCount} enrolled
                 </p>
               </div>
               <button
                 onClick={() => setDetailId(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400"
+                className="p-1.5 rounded-lg hover:bg-[#191a1b] text-[#8a8f98]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -441,11 +441,11 @@ export default function SequencesPage() {
               {/* Enrollment section */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-slate-400" />
-                  <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                  <Users className="w-4 h-4 text-[#8a8f98]" />
+                  <h3 className="text-xs font-semibold text-[#8a8f98] uppercase tracking-wide">
                     Enrolled Contacts
                   </h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#191a1b] text-[#8a8f98]">
                     {enrollments.length}
                   </span>
                 </div>
@@ -457,20 +457,20 @@ export default function SequencesPage() {
                       return (
                         <div
                           key={en.id}
-                          className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-3 py-2"
+                          className="flex items-center justify-between bg-[#08090a] border border-white/[0.06] rounded-lg px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-[10px] font-semibold">
+                            <div className="w-6 h-6 rounded-full bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center text-[10px] font-semibold">
                               {(contact?.firstName?.[0] || "") +
                                 (contact?.lastName?.[0] || "")}
                             </div>
                             <div>
-                              <div className="text-xs text-slate-200">
+                              <div className="text-xs text-[#d0d6e0]">
                                 {contact
                                   ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim()
                                   : "Unknown contact"}
                               </div>
-                              <div className="text-[10px] text-slate-500">
+                              <div className="text-[10px] text-[#62666d]">
                                 {en.status} · step {en.currentStep} · enrolled{" "}
                                 {new Date(en.enrolledAt).toLocaleDateString()}
                               </div>
@@ -479,7 +479,7 @@ export default function SequencesPage() {
                           <button
                             onClick={() => removeEnrollment(en.id)}
                             disabled={unenrolling}
-                            className="p-1.5 rounded hover:bg-slate-800 text-slate-500 hover:text-red-400 transition-colors"
+                            className="p-1.5 rounded hover:bg-[#191a1b] text-[#62666d] hover:text-red-400 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -492,14 +492,14 @@ export default function SequencesPage() {
                 {availableContacts.length > 0 && (
                   <form
                     onSubmit={enrollContact}
-                    className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2"
+                    className="flex items-center gap-2 bg-[#08090a] border border-white/[0.06] rounded-lg px-3 py-2"
                   >
-                    <UserPlus className="w-4 h-4 text-slate-500 shrink-0" />
+                    <UserPlus className="w-4 h-4 text-[#62666d] shrink-0" />
                     <select
                       value={enrollContactId}
                       onChange={(e) => setEnrollContactId(e.target.value)}
                       required
-                      className="flex-1 h-8 px-2 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none"
+                      className="flex-1 h-8 px-2 rounded bg-[#0f1011] border border-white/[0.06] text-xs text-[#d0d6e0] focus:outline-none"
                     >
                       <option value="">Select contact to enroll</option>
                       {availableContacts.map((c) => (
@@ -511,7 +511,7 @@ export default function SequencesPage() {
                     <button
                       type="submit"
                       disabled={enrolling}
-                      className="h-7 px-3 rounded bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 disabled:opacity-50"
+                      className="h-7 px-3 rounded bg-[#5e6ad2] text-[#f7f8f8] text-xs font-medium hover:bg-[#5e6ad2] disabled:opacity-50"
                     >
                       {enrolling ? "..." : "Enroll"}
                     </button>
@@ -522,30 +522,30 @@ export default function SequencesPage() {
               {/* Steps list */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-400" />
-                  <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                  <Mail className="w-4 h-4 text-[#8a8f98]" />
+                  <h3 className="text-xs font-semibold text-[#8a8f98] uppercase tracking-wide">
                     Steps
                   </h3>
                 </div>
                 {steps.length === 0 && (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-[#62666d]">
                     No steps yet. Add the first email below.
                   </p>
                 )}
                 {steps.map((st, i) => (
-                  <div key={st.id} className="relative pl-6 border-l border-slate-700">
-                    <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-emerald-500 text-[10px] text-white flex items-center justify-center font-bold">
+                  <div key={st.id} className="relative pl-6 border-l border-white/[0.06]">
+                    <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-[#5e6ad2] text-[10px] text-[#f7f8f8] flex items-center justify-center font-bold">
                       {i + 1}
                     </div>
-                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-1">
+                    <div className="bg-[#08090a] border border-white/[0.06] rounded-lg p-3 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-slate-200">{st.subject}</span>
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                        <span className="text-xs font-medium text-[#d0d6e0]">{st.subject}</span>
+                        <span className="text-[10px] text-[#62666d] flex items-center gap-1">
                           <Clock className="w-3 h-3" />+{st.delayDays}d{" "}
                           {st.delayHours > 0 ? `${st.delayHours}h` : ""}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 line-clamp-2">{st.body}</p>
+                      <p className="text-xs text-[#8a8f98] line-clamp-2">{st.body}</p>
                     </div>
                   </div>
                 ))}
@@ -555,49 +555,49 @@ export default function SequencesPage() {
               {showAddStep ? (
                 <form
                   onSubmit={addStep}
-                  className="bg-slate-950 border border-slate-800 rounded-lg p-4 space-y-3"
+                  className="bg-[#08090a] border border-white/[0.06] rounded-lg p-4 space-y-3"
                 >
-                  <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                  <div className="flex items-center gap-2 text-xs text-[#8a8f98] font-medium">
                     <ArrowRight className="w-3.5 h-3.5" /> Add Step {steps.length + 1}
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs text-slate-500">Subject</label>
+                    <label className="block text-xs text-[#62666d]">Subject</label>
                     <input
                       value={stepSubject}
                       onChange={(e) => setStepSubject(e.target.value)}
                       required
-                      className="w-full h-9 px-3 rounded bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none"
+                      className="w-full h-9 px-3 rounded bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs text-slate-500">Body</label>
+                    <label className="block text-xs text-[#62666d]">Body</label>
                     <textarea
                       value={stepBody}
                       onChange={(e) => setStepBody(e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none resize-none"
+                      className="w-full px-3 py-2 rounded bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none resize-none"
                     />
                   </div>
                   <div className="flex gap-3">
                     <div className="space-y-1.5">
-                      <label className="block text-xs text-slate-500">Delay (days)</label>
+                      <label className="block text-xs text-[#62666d]">Delay (days)</label>
                       <input
                         type="number"
                         min={0}
                         value={stepDelayDays}
                         onChange={(e) => setStepDelayDays(Number(e.target.value))}
-                        className="w-24 h-9 px-3 rounded bg-slate-900 border border-slate-800 text-sm text-slate-200"
+                        className="w-24 h-9 px-3 rounded bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-xs text-slate-500">Delay (hours)</label>
+                      <label className="block text-xs text-[#62666d]">Delay (hours)</label>
                       <input
                         type="number"
                         min={0}
                         max={23}
                         value={stepDelayHours}
                         onChange={(e) => setStepDelayHours(Number(e.target.value))}
-                        className="w-24 h-9 px-3 rounded bg-slate-900 border border-slate-800 text-sm text-slate-200"
+                        className="w-24 h-9 px-3 rounded bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0]"
                       />
                     </div>
                   </div>
@@ -605,13 +605,13 @@ export default function SequencesPage() {
                     <button
                       type="button"
                       onClick={() => setShowAddStep(false)}
-                      className="h-8 px-3 rounded border border-slate-700 text-slate-300 text-sm hover:bg-slate-800"
+                      className="h-8 px-3 rounded border border-white/[0.06] text-[#8a8f98] text-sm hover:bg-[#191a1b]"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="h-8 px-3 rounded bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 flex items-center gap-1.5"
+                      className="h-8 px-3 rounded bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] flex items-center gap-1.5"
                     >
                       <Save className="w-3.5 h-3.5" /> Save Step
                     </button>
@@ -620,7 +620,7 @@ export default function SequencesPage() {
               ) : (
                 <button
                   onClick={() => setShowAddStep(true)}
-                  className="flex items-center gap-2 text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                  className="flex items-center gap-2 text-xs font-medium text-[#10b981] hover:text-emerald-300"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Step
                 </button>

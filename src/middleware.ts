@@ -10,21 +10,21 @@ import { verifyToken } from "./lib/auth";
    - Sets x-workspace-id header for server-side resolution
 ========================================================= */
 
-const PUBLIC_ROUTES = [
-  "/", 
-  "/login", 
-  "/register", 
-  "/demo", 
-  "/pricing", 
-  "/api/auth", 
-  "/_next", 
-  "/favicon.ico", 
-  "/logo", 
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/register",
+  "/demo",
+  "/pricing",
+  "/api/auth",
+  "/_next",
+  "/favicon.ico",
+  "/logo",
   "/static",
 ];
 
 function isPublicRoute(pathname: string): boolean {
-  if (PUBLIC_ROUTES.some((p) => pathname.startsWith(p))) return true;
+  if (pathname === "/") return true;
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) return true;
   if (pathname.startsWith("/api/invites/")) return true; // public invite endpoints
   if (pathname.startsWith("/invite/")) return true;      // public invite page
   if (pathname.includes(".")) return true;
@@ -35,10 +35,7 @@ export async function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
   // Skip public routes + static assets
-  if (PUBLIC_ROUTES.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-  if (pathname.includes(".")) {
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 

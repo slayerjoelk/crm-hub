@@ -34,14 +34,14 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/custom-fields?entityType=${entityType}`, {
+    fetch(`/api/custom-fields?entityType=${entityType}`, { credentials: "include",
       headers: { "x-workspace-id": workspace, "x-user-id": "system" },
     })
       .then((r) => r.json())
       .then(async (json) => {
         let defs: CustomFieldDef[] = json.data || [];
         if (entityId) {
-          const vRes = await fetch(`/api/custom-values/${entityType}/${entityId}`, {
+          const vRes = await fetch(`/api/custom-values/${entityType}/${entityId}`, { credentials: "include",
             headers: { "x-workspace-id": workspace, "x-user-id": "system" },
           });
           const vJson = await vRes.json().catch(() => ({}));
@@ -68,8 +68,8 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
   function renderInput(f: CustomFieldDef) {
     const val = localVals[f.id] ?? "";
     const baseCls =
-      "w-full px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
-    const labelCls = "block text-xs font-medium text-slate-400 mb-1";
+      "w-full px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]";
+    const labelCls = "block text-xs font-medium text-[#8a8f98] mb-1";
     const opts = f.options ? (JSON.parse(f.options) as string[]) : [];
 
     switch (f.type) {
@@ -125,9 +125,9 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
               type="checkbox"
               checked={val === "true" || val === "1"}
               onChange={(e) => update(f.id, e.target.checked ? "true" : "false")}
-              className="rounded bg-slate-800 border-slate-600 text-emerald-500"
+              className="rounded bg-[#191a1b] border-white/[0.08] text-[#10b981]"
             />
-            <label htmlFor={f.id} className="text-sm text-slate-300 cursor-pointer">
+            <label htmlFor={f.id} className="text-sm text-[#8a8f98] cursor-pointer">
               {f.label}{f.isRequired ? " *" : ""}
             </label>
           </div>
@@ -200,7 +200,7 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
     }
   }
 
-  if (loading) return <div className="animate-pulse rounded-xl border border-slate-800 bg-slate-900/40 h-24" />;
+  if (loading) return <div className="animate-pulse rounded-xl border border-white/[0.06] bg-[#0f1011]/40 h-24" />;
   if (fields.length === 0) return null;
 
   if (mode === "display") {
@@ -208,8 +208,8 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {fields.map((f) => (
           <div key={f.id}>
-            <p className="text-xs font-medium text-slate-500">{f.label}</p>
-            <p className="text-sm text-slate-200 mt-0.5">{f.value || <span className="text-slate-600">—</span>}</p>
+            <p className="text-xs font-medium text-[#62666d]">{f.label}</p>
+            <p className="text-sm text-[#d0d6e0] mt-0.5">{f.value || <span className="text-[#62666d]">—</span>}</p>
           </div>
         ))}
       </div>
@@ -217,8 +217,8 @@ export function CustomFieldsSection({ entityType, entityId, mode, values, onChan
   }
 
   return (
-    <div className="space-y-3 border-t border-slate-800 pt-4 mt-2">
-      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Custom Fields</p>
+    <div className="space-y-3 border-t border-white/[0.06] pt-4 mt-2">
+      <p className="text-xs font-semibold text-[#8a8f98] uppercase tracking-wider">Custom Fields</p>
       {fields.map((f) => renderInput(f))}
     </div>
   );

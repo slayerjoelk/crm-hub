@@ -47,9 +47,13 @@ export function CsvExportButton({ data, filename, columns }: Props) {
     <button
       onClick={download}
       disabled={exporting || !data || data.length === 0}
-      className="h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm flex items-center gap-2 hover:bg-slate-700 transition-colors disabled:opacity-50"
+      className="h-9 px-3 rounded-md text-[13px] font-medium flex items-center gap-2 border transition-colors disabled:opacity-50 text-[#d0d6e0] hover:bg-[rgba(255,255,255,0.04)]"
+      style={{
+        backgroundColor: "rgba(255,255,255,0.02)",
+        borderColor: "rgba(255,255,255,0.06)",
+      }}
     >
-      <Download className="w-4 h-4" />
+      <Download className="w-3.5 h-3.5" />
       {exporting ? "Exporting..." : "Export CSV"}
     </button>
   );

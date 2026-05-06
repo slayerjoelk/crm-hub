@@ -8,19 +8,19 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 function KpiCard({ title, value, icon: Icon, trend, trendLabel, color }: any) {
   const up = trend >= 0;
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 hover:border-slate-700 transition-colors">
+    <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5 hover:border-white/[0.06] transition-colors">
       <div className="flex items-center justify-between">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: color + "15"}}>
           <Icon className="w-5 h-5" style={{color}} />
         </div>
-        <div className={`flex items-center gap-1 text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
+        <div className={`flex items-center gap-1 text-xs font-medium ${up ? "text-[#10b981]" : "text-red-400"}`}>
           {up ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
           {Math.abs(trend)}%
         </div>
       </div>
       <div className="mt-3">
-        <div className="text-2xl font-bold text-slate-100">{value}</div>
-        <div className="text-sm text-slate-500 mt-0.5">{title}</div>
+        <div className="text-2xl font-bold text-[#f7f8f8]">{value}</div>
+        <div className="text-sm text-[#62666d] mt-0.5">{title}</div>
       </div>
     </div>
   );
@@ -29,7 +29,7 @@ function KpiCard({ title, value, icon: Icon, trend, trendLabel, color }: any) {
 export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<any>(null);
-  useEffect(() => { fetch("/api/dashboard").then(r => r.json()).then(json => setData(json)); }, []);
+  useEffect(() => { fetch("/api/dashboard", { credentials: "include" }).then(r => r.json()).then(json => setData(json)); }, []);
 
   const pipelineColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
   const chartData = data?.monthlyRevenue ?? [];
@@ -37,7 +37,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-white">Dashboard</h1><p className="text-slate-500 text-sm mt-1">Overview of your CRM</p></div>
+      <div>
+        <h1 className="text-2xl font-semibold text-[#f7f8f8] tracking-tight">Dashboard</h1>
+        <p className="text-[13px] text-[#62666d] mt-0.5">Overview of your CRM</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title="Contacts" value={data?.stats?.contacts ?? "-"} icon={Users} trend={data?.trends?.contacts ?? 0} color="#3b82f6" />
@@ -47,10 +50,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <div className="lg:col-span-2 rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-200">Revenue Overview</h3>
-            <div className="text-xs text-emerald-400 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5"/>+18% this month</div>
+            <h3 className="text-sm font-semibold text-[#d0d6e0]">Revenue Overview</h3>
+            <div className="text-xs text-[#10b981] flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5"/>+18% this month</div>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -68,8 +71,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Pipeline Distribution</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Pipeline Distribution</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -85,24 +88,24 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Recent Deals</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Recent Deals</h3>
           <div className="space-y-3">
             {(data?.deals ?? []).slice(0,10).map((deal: any) => (
-              <div key={deal.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50">
+              <div key={deal.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03]">
                 <div>
-                  <div className="text-sm font-medium text-slate-200">{deal.name}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{deal.value ? "$"+deal.value.toLocaleString() : "-"} — {deal.status}</div>
+                  <div className="text-sm font-medium text-[#d0d6e0]">{deal.name}</div>
+                  <div className="text-xs text-[#62666d] mt-0.5">{deal.value ? "$"+deal.value.toLocaleString() : "-"} — {deal.status}</div>
                 </div>
-                {deal.expectedCloseDate && <div className="text-xs text-slate-600 flex items-center gap-1"><Calendar className="w-3 h-3"/>{new Date(deal.expectedCloseDate).toLocaleDateString()}</div>}
+                {deal.expectedCloseDate && <div className="text-xs text-[#62666d] flex items-center gap-1"><Calendar className="w-3 h-3"/>{new Date(deal.expectedCloseDate).toLocaleDateString()}</div>}
               </div>
             ))}
-            {(!data?.deals || data.deals.length === 0) && <div className="text-center text-sm text-slate-600 py-8">No deals yet. Create one to get started.</div>}
+            {(!data?.deals || data.deals.length === 0) && <div className="text-center text-sm text-[#62666d] py-8">No deals yet. Create one to get started.</div>}
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Recent Activity</h3>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+          <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Recent Activity</h3>
           <div className="space-y-3">
             {(data?.activities ?? []).slice(0,10).map((act: any, i: number) => {
               const hasLink = act.contactId || act.dealId || act.companyId;
@@ -110,27 +113,27 @@ export default function DashboardPage() {
               const label = act.contactId ? 'Contact' : act.dealId ? 'Deal' : 'Company';
               if (hasLink) {
                 return (
-                  <button key={`${act.id}-${i}`} onClick={() => linkTarget && router.push(linkTarget)} className="w-full text-left flex items-start gap-3 p-3 rounded-lg hover:bg-slate-800/50 transition-colors cursor-pointer">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <button key={`${act.id}-${i}`} onClick={() => linkTarget && router.push(linkTarget)} className="w-full text-left flex items-start gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors cursor-pointer">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#5e6ad2] shrink-0" />
                     <div>
-                      <div className="text-sm text-slate-200">{act.body}</div>
-                      <div className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
-                      <div className="text-[11px] text-emerald-400 mt-1">Open {label} →</div>
+                      <div className="text-sm text-[#d0d6e0]">{act.body}</div>
+                      <div className="text-xs text-[#62666d] flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
+                      <div className="text-[11px] text-[#10b981] mt-1">Open {label} →</div>
                     </div>
                   </button>
                 );
               }
               return (
                 <div key={`${act.id}-${i}`} className="flex items-start gap-3 p-3">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0" />
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#34343a] shrink-0" />
                   <div>
-                    <div className="text-sm text-slate-200">{act.body}</div>
-                    <div className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
+                    <div className="text-sm text-[#d0d6e0]">{act.body}</div>
+                    <div className="text-xs text-[#62666d] flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/>{act.createdAt ? new Date(act.createdAt).toLocaleDateString() : "-"}</div>
                   </div>
                 </div>
               );
             })}
-            {(!data?.activities || data.activities.length === 0) && <div className="text-center text-sm text-slate-600 py-8">No activity yet.</div>}
+            {(!data?.activities || data.activities.length === 0) && <div className="text-center text-sm text-[#62666d] py-8">No activity yet.</div>}
           </div>
         </div>
       </div>

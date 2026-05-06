@@ -69,7 +69,7 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/contacts")
+    fetch("/api/contacts", { credentials: "include" })
       .then((r) => r.json())
       .then((r) => setContacts(r.data ?? []));
     loadEmails();
@@ -78,7 +78,7 @@ export default function EmailsPage() {
   async function loadEmails() {
     setLoading(true);
     try {
-      const r = await fetch("/api/emails");
+      const r = await fetch("/api/emails", { credentials: "include" });
       const j = await r.json();
       if (j.success) setEmails(j.data ?? []);
     } catch (e) {
@@ -103,7 +103,7 @@ export default function EmailsPage() {
       return;
     }
     try {
-      const res = await fetch("/api/emails", {
+      const res = await fetch("/api/emails", { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,32 +138,32 @@ export default function EmailsPage() {
   }
 
   const inputCls =
-    "w-full h-10 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
+    "w-full h-10 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]";
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Emails</h1>
-          <p className="text-slate-500 text-sm mt-1">Communication center</p>
+          <h1 className="text-2xl font-bold text-[#f7f8f8]">Emails</h1>
+          <p className="text-[#62666d] text-sm mt-1">Communication center</p>
         </div>
         <button
           onClick={() => setShowCompose(true)}
-          className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+          className="flex items-center gap-2 h-9 px-4 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2]"
         >
           <Plus className="w-4 h-4" /> Compose
         </button>
       </div>
 
-      <div className="flex rounded-lg border border-slate-800 overflow-hidden bg-slate-900">
+      <div className="flex rounded-lg border border-white/[0.06] overflow-hidden bg-[#0f1011]">
         {(["inbox", "templates"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setTab(v)}
             className={`px-4 py-1.5 text-xs font-medium capitalize transition-colors flex items-center gap-1.5 ${
               tab === v
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "text-slate-400 hover:text-slate-300"
+                ? "bg-[#10b981]/[0.12] text-[#10b981]"
+                : "text-[#8a8f98] hover:text-[#8a8f98]"
             }`}
           >
             {v === "inbox" ? <Inbox className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
@@ -181,13 +181,13 @@ export default function EmailsPage() {
                 setSelectedTemplate(t);
                 setShowCompose(true);
               }}
-              className="w-full text-left rounded-xl border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-600 transition-colors"
+              className="w-full text-left rounded-xl border border-white/[0.06] bg-[#0f1011] p-4 hover:border-white/[0.08] transition-colors"
             >
               <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-medium text-slate-200">{t.name}</span>
+                <FileText className="w-4 h-4 text-[#8a8f98]" />
+                <span className="text-sm font-medium text-[#d0d6e0]">{t.name}</span>
               </div>
-              <div className="text-xs text-slate-500 truncate">{t.subject}</div>
+              <div className="text-xs text-[#62666d] truncate">{t.subject}</div>
             </button>
           ))}
         </div>
@@ -202,30 +202,30 @@ export default function EmailsPage() {
           )}
 
           {!loading && emails.length === 0 && (
-            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
-              <Mail className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No emails yet. Use Compose to send.</p>
+            <div className="text-center py-12 border border-dashed border-white/[0.06] rounded-xl">
+              <Mail className="w-8 h-8 text-[#62666d] mx-auto mb-3" />
+              <p className="text-sm text-[#62666d]">No emails yet. Use Compose to send.</p>
             </div>
           )}
 
           {emails.map((em) => (
             <div
               key={em.id}
-              className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4 hover:border-slate-600 transition-colors"
+              className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-[#0f1011] p-4 hover:border-white/[0.08] transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center shrink-0">
                 <Mail className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-200 truncate">
+                  <span className="text-sm font-medium text-[#d0d6e0] truncate">
                     {em.subject}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-slate-800 text-slate-400 border-slate-700 uppercase">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-[#191a1b] text-[#8a8f98] border-white/[0.06] uppercase">
                     {em.direction}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                <div className="flex items-center gap-3 text-xs text-[#62666d] mt-1">
                   <span>To: {em.toName || em.toEmail}</span>
                   {em.sentAt && (
                     <span className="flex items-center gap-1">
@@ -240,7 +240,7 @@ export default function EmailsPage() {
                   )}
                 </div>
                 {em.textBody && (
-                  <p className="text-xs text-slate-400 mt-2 line-clamp-2">{em.textBody}</p>
+                  <p className="text-xs text-[#8a8f98] mt-2 line-clamp-2">{em.textBody}</p>
                 )}
               </div>
             </div>
@@ -254,26 +254,26 @@ export default function EmailsPage() {
           onClick={() => setShowCompose(false)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl m-4"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl m-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center">
                   <Mail className="w-4 h-4" />
                 </div>
-                <h2 className="text-sm font-semibold text-white">Compose</h2>
+                <h2 className="text-sm font-semibold text-[#f7f8f8]">Compose</h2>
               </div>
               <button
                 onClick={() => setShowCompose(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400"
+                className="p-1.5 rounded-lg hover:bg-[#191a1b] text-[#8a8f98]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={send} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">
                   To
                 </label>
                 <select
@@ -282,16 +282,16 @@ export default function EmailsPage() {
                   className={`${inputCls} appearance-none`}
                   required
                 >
-                  <option value="" className="bg-slate-900">-- Select contact --</option>
+                  <option value="" className="bg-[#0f1011]">-- Select contact --</option>
                   {contacts.map((c: any) => (
-                    <option key={c.id} value={c.id} className="bg-slate-900">
+                    <option key={c.id} value={c.id} className="bg-[#0f1011]">
                       {c.firstName} {c.lastName} ({c.email})
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">
                   Template
                 </label>
                 <select
@@ -303,18 +303,18 @@ export default function EmailsPage() {
                   }
                   className={`${inputCls} appearance-none`}
                 >
-                  <option value="" className="bg-slate-900">
+                  <option value="" className="bg-[#0f1011]">
                     -- Select template (optional) --
                   </option>
                   {TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id} className="bg-slate-900">
+                    <option key={t.id} value={t.id} className="bg-[#0f1011]">
                       {t.name}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">
                   Subject
                 </label>
                 <input
@@ -325,7 +325,7 @@ export default function EmailsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">
                   Message
                 </label>
                 <textarea
@@ -338,21 +338,21 @@ export default function EmailsPage() {
                 />
               </div>
               <div className="flex items-center justify-between pt-2">
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[10px] text-[#62666d]">
                   {`Supports variables: {{firstName}}, {{lastName}}, {{company}}`}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setShowCompose(false)}
-                    className="h-9 px-4 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800"
+                    className="h-9 px-4 rounded-lg border border-white/[0.06] text-[#8a8f98] text-sm font-medium hover:bg-[#191a1b]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={sending || !selectedContact || !subject}
-                    className="h-9 px-5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2"
+                    className="h-9 px-5 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] disabled:opacity-50 flex items-center gap-2"
                   >
                     {sending ? (
                       <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

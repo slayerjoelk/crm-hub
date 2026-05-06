@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #08090a;
+  --color-surface: #0f1011;
+  --color-elevated: #191a1b;
+  --color-hover: #28282c;
+  --color-primary-text: #f7f8f8;
+  --color-secondary: #d0d6e0;
+  --color-muted: #8a8f98;
+  --color-faint: #62666d;
+  --color-brand: #5e6ad2;
+  --color-brand-light: #7170ff;
+  --color-brand-hover: #828fff;
+  --color-success: #10b981;
+  --color-success-soft: #10b98133;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #f59e0b33;
+  --color-danger: #ef4444;
+  --color-danger-soft: #ef444433;
+  --color-info: #3b82f6;
+  --color-info-soft: #3b82f633;
+  --color-border: rgba(255,255,255,0.06);
+  --color-border-hover: rgba(255,255,255,0.10);
+  --color-border-strong: rgba(255,255,255,0.14);
+  --color-overlay: rgba(0,0,0,0.85);
+}
+
 @layer base {
   html {
     color-scheme: dark;
@@ -7,7 +33,12 @@
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    background-color: #08090a;
+    color: #f7f8f8;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-feature-settings: "cv01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -19,62 +50,40 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(255,255,255,0.10);
 }
 
-/* Shadcn/ui theme tokens via Tailwind CSS v4 */
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+/* Shadcn/ui theme tokens */
+.dark {
+  --background: 0 0% 3%;
+  --foreground: 210 40% 98%;
+  --card: 0 0% 3%;
+  --card-foreground: 210 40% 98%;
+  --popover: 0 0% 6%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 235 58% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 8%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 0 0% 8%;
+  --muted-foreground: 220 10% 56%;
+  --accent: 0 0% 8%;
+  --accent-foreground: 210 40% 98%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --radius: 0.5rem;
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  --border: 0 0% 100% / 0.06;
+  --input: 0 0% 100% / 0.06;
+  --ring: 235 58% 60%;
+  --radius: 0.375rem;
 }

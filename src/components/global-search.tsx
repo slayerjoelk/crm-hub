@@ -28,11 +28,11 @@ export default function GlobalSearch() {
       const out: SearchItem[] = [];
       try {
         const [contacts, companies, deals, tasks, tags] = await Promise.all([
-          fetch("/api/contacts").then((r) => r.json()),
-          fetch("/api/companies").then((r) => r.json()),
-          fetch("/api/deals").then((r) => r.json()),
-          fetch("/api/tasks").then((r) => r.json()),
-          fetch("/api/tags").then((r) => r.json()),
+          fetch("/api/contacts", { credentials: "include" }).then((r) => r.json()),
+          fetch("/api/companies", { credentials: "include" }).then((r) => r.json()),
+          fetch("/api/deals", { credentials: "include" }).then((r) => r.json()),
+          fetch("/api/tasks", { credentials: "include" }).then((r) => r.json()),
+          fetch("/api/tags", { credentials: "include" }).then((r) => r.json()),
         ]);
         (contacts.data || []).forEach((c: any) => {
           out.push({
@@ -92,13 +92,13 @@ export default function GlobalSearch() {
 
   const iconFor = (type: string) => {
     switch (type) {
-      case "contact": return <Users className="w-4 h-4 text-emerald-400" />;
+      case "contact": return <Users className="w-4 h-4 text-[#10b981]" />;
       case "company": return <Building2 className="w-4 h-4 text-blue-400" />;
       case "deal": return <BarChart3 className="w-4 h-4 text-violet-400" />;
       case "task": return <CheckSquare className="w-4 h-4 text-amber-400" />;
       case "email": return <Mail className="w-4 h-4 text-pink-400" />;
       case "tag": return <Tag className="w-4 h-4 text-cyan-400" />;
-      default: return <Search className="w-4 h-4 text-slate-400" />;
+      default: return <Search className="w-4 h-4 text-[#8a8f98]" />;
     }
   };
 
@@ -107,35 +107,35 @@ export default function GlobalSearch() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 h-8 px-3 rounded-lg bg-slate-800/80 border border-slate-700/50 text-slate-400 text-sm hover:bg-slate-800 hover:text-slate-300 transition-colors"
+        className="flex items-center gap-2 h-8 px-3 rounded-lg bg-[#191a1b]/80 border border-white/[0.06]/50 text-[#8a8f98] text-sm hover:bg-[#191a1b] hover:text-[#8a8f98] transition-colors"
       >
         <Search className="w-3.5 h-3.5" />
         <span className="hidden md:inline">Search...</span>
-        <span className="hidden md:inline text-[10px] bg-slate-700/60 text-slate-500 px-1 py-0.5 rounded">⌘K</span>
+        <span className="hidden md:inline text-[10px] bg-[#28282c]/60 text-[#62666d] px-1 py-0.5 rounded">⌘K</span>
       </button>
 
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <div
-            className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden"
+            className="w-full max-w-xl rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800">
-              <Search className="w-5 h-5 text-slate-500 shrink-0" />
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+              <Search className="w-5 h-5 text-[#62666d] shrink-0" />
               <input
                 value={q}
                 onChange={(e) => { setQ(e.target.value); setIdx(0); }}
                 onKeyDown={onKeyDown}
                 placeholder="Search contacts, companies, deals, tasks, tags..."
                 autoFocus
-                className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-[#d0d6e0] placeholder:text-[#62666d] focus:outline-none"
               />
-              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-slate-800 text-slate-500"><X className="w-4 h-4" /></button>
+              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-[#191a1b] text-[#62666d]"><X className="w-4 h-4" /></button>
             </div>
             <div className="max-h-[50vh] overflow-y-auto">
               {results.length === 0 && q.trim() ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-500">No results for "{q}"</div>
+                <div className="px-4 py-8 text-center text-sm text-[#62666d]">No results for "{q}"</div>
               ) : (
                 <div className="py-2">
                   {results.map((it, i) => (
@@ -143,21 +143,21 @@ export default function GlobalSearch() {
                       key={`${it.type}-${it.id}`}
                       onClick={() => navigate(it.href)}
                       className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
-                        i === idx ? "bg-slate-800" : "hover:bg-slate-800/50"
+                        i === idx ? "bg-[#191a1b]" : "hover:bg-white/[0.03]"
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">{iconFor(it.type)}</div>
+                      <div className="w-8 h-8 rounded-lg bg-[#191a1b] flex items-center justify-center shrink-0">{iconFor(it.type)}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-200 truncate">{it.label}</div>
-                        <div className="text-xs text-slate-500 truncate">{it.sub}</div>
+                        <div className="text-sm font-medium text-[#d0d6e0] truncate">{it.label}</div>
+                        <div className="text-xs text-[#62666d] truncate">{it.sub}</div>
                       </div>
-                      <span className="text-[10px] uppercase tracking-wider text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded shrink-0">{it.type}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-[#62666d] bg-[#191a1b] px-1.5 py-0.5 rounded shrink-0">{it.type}</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <div className="px-4 py-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-600">
+            <div className="px-4 py-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-[#62666d]">
               <div className="flex items-center gap-3">
                 <span>↑↓ navigate</span>
                 <span>↵ open</span>

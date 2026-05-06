@@ -7,19 +7,19 @@ import { TagManager } from "@/components/tag-manager";
 import { LogActivityModal } from "@/components/crm/log-activity-modal";
 
 const TAB_STYLE = "px-4 py-2.5 text-sm font-medium transition-colors relative";
-const TAB_ACTIVE = "text-emerald-400";
-const TAB_INACTIVE = "text-slate-400 hover:text-slate-200";
+const TAB_ACTIVE = "text-[#10b981]";
+const TAB_INACTIVE = "text-[#8a8f98] hover:text-[#d0d6e0]";
 
 const STATUS_BADGE = (status: string) => {
-  if (status === "won") return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+  if (status === "won") return "bg-[#10b981]/[0.12] text-[#10b981] border border-[#10b981]/[0.08]";
   if (status === "lost") return "bg-red-500/10 text-red-400 border border-red-500/20";
   return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
 };
 
 const TASK_STATUS = (status: string) => {
-  if (status === "done") return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+  if (status === "done") return "bg-[#10b981]/[0.12] text-[#10b981] border border-[#10b981]/[0.08]";
   if (status === "in_progress") return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
-  return "bg-slate-700/50 text-slate-300 border border-slate-600/30";
+  return "bg-[#28282c]/50 text-[#8a8f98] border border-white/[0.08]/30";
 };
 
 export default function DealDetailPage() {
@@ -45,7 +45,7 @@ export default function DealDetailPage() {
         fetch(`/api/deals/${id}`).then(r => r.json()),
         fetch(`/api/activities?entityType=deal&entityId=${id}`).then(r => r.json()),
         fetch(`/api/tasks?dealId=${id}`).then(r => r.json()),
-        fetch(`/api/pipelines`).then(r => r.json()),
+        fetch(`/api/pipelines`, { credentials: "include" }).then(r => r.json()),
       ]);
       setDeal(dRes.data || null);
       setActivities(aRes.data || []);
@@ -77,23 +77,23 @@ export default function DealDetailPage() {
     e.preventDefault();
     setSaving(true);
     const payload = { ...editForm, value: editForm.value ? Number(editForm.value) : null };
-    const res = await fetch(`/api/deals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const res = await fetch(`/api/deals/${id}`, { credentials: "include", method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     setSaving(false);
     if (res.ok) { setShowEdit(false); load(); }
   }
 
   async function doDelete() {
     setDeleting(true);
-    const res = await fetch(`/api/deals/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/deals/${id}`, { credentials: "include", method: "DELETE" });
     setDeleting(false);
     if (res.ok) { router.push(`/${workspace}/deals`); }
   }
 
-  const inputCls = "w-full h-10 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/60";
-  const labelCls = "block text-xs font-medium text-slate-500 mb-1";
+  const inputCls = "w-full h-10 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]";
+  const labelCls = "block text-xs font-medium text-[#62666d] mb-1";
 
-  if (loading) return <div className="p-8 text-slate-400">Loading...</div>;
-  if (!deal) return <div className="p-8 text-slate-400">Deal not found</div>;
+  if (loading) return <div className="p-8 text-[#8a8f98]">Loading...</div>;
+  if (!deal) return <div className="p-8 text-[#8a8f98]">Deal not found</div>;
 
   const pipeline = pipelines.find((p: any) => p.id === deal.pipelineId);
   const stageName = pipeline?.stages?.find((s: any) => s.id === deal.stageId)?.name || deal.stageId;
@@ -113,10 +113,10 @@ export default function DealDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /> Back</button>
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-[#8a8f98] hover:text-[#f7f8f8] transition-colors"><ArrowLeft className="w-4 h-4" /> Back</button>
         <div className="flex items-center gap-2">
-          <button onClick={openEdit} className="h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm flex items-center gap-2 hover:bg-slate-700 transition-colors"><Pencil size={14} /> Edit</button>
-          <button onClick={() => setShowDelete(true)} className="h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 text-red-400 text-sm flex items-center gap-2 hover:bg-red-500/10 hover:border-red-500/30 transition-colors"><Trash2 size={14} /> Delete</button>
+          <button onClick={openEdit} className="h-9 px-3 rounded-lg bg-[#191a1b] border border-white/[0.06] text-[#8a8f98] text-sm flex items-center gap-2 hover:bg-[#28282c] transition-colors"><Pencil size={14} /> Edit</button>
+          <button onClick={() => setShowDelete(true)} className="h-9 px-3 rounded-lg bg-[#191a1b] border border-white/[0.06] text-red-400 text-sm flex items-center gap-2 hover:bg-red-500/10 hover:border-red-500/30 transition-colors"><Trash2 size={14} /> Delete</button>
         </div>
       </div>
 
@@ -124,69 +124,69 @@ export default function DealDetailPage() {
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-300"><Briefcase className="w-7 h-7" /></div>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-white">{deal.name}</h1>
+            <h1 className="text-xl font-semibold text-[#f7f8f8]">{deal.name}</h1>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_BADGE(deal.status)}`}>{deal.status}</span>
           </div>
           <div className="mt-2">
             <TagManager entityType="deal" entityId={id} />
           </div>
-          {pipeline && <div className="text-sm text-slate-500 mt-0.5">{pipeline.name} → {stageName}</div>}
+          {pipeline && <div className="text-sm text-[#62666d] mt-0.5">{pipeline.name} → {stageName}</div>}
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"><div className="text-2xl font-bold text-white">{deal.value ? new Intl.NumberFormat("en-US", { style: "currency", currency: deal.currency || "USD", maximumFractionDigits: 0 }).format(deal.value) : "$0"}</div><div className="text-xs text-slate-500 mt-1">Value</div></div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"><div className="text-2xl font-bold text-white">{deal.probability || 0}%</div><div className="text-xs text-slate-500 mt-1">Probability</div></div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"><div className="text-2xl font-bold text-white">{deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "-"}</div><div className="text-xs text-slate-500 mt-1">Expected Close</div></div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"><div className="text-2xl font-bold text-white capitalize">{deal.priority || "medium"}</div><div className="text-xs text-slate-500 mt-1">Priority</div></div>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-4"><div className="text-2xl font-bold text-[#f7f8f8]">{deal.value ? new Intl.NumberFormat("en-US", { style: "currency", currency: deal.currency || "USD", maximumFractionDigits: 0 }).format(deal.value) : "$0"}</div><div className="text-xs text-[#62666d] mt-1">Value</div></div>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-4"><div className="text-2xl font-bold text-[#f7f8f8]">{deal.probability || 0}%</div><div className="text-xs text-[#62666d] mt-1">Probability</div></div>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-4"><div className="text-2xl font-bold text-[#f7f8f8]">{deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "-"}</div><div className="text-xs text-[#62666d] mt-1">Expected Close</div></div>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-4"><div className="text-2xl font-bold text-[#f7f8f8] capitalize">{deal.priority || "medium"}</div><div className="text-xs text-[#62666d] mt-1">Priority</div></div>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-white/[0.06]">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className={`${TAB_STYLE} ${tab === t.id ? TAB_ACTIVE : TAB_INACTIVE}`}>
             {t.label}
-            {t.count !== null && <span className="ml-1.5 text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full">{t.count}</span>}
-            {tab === t.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500/60 rounded-t-full" />}
+            {t.count !== null && <span className="ml-1.5 text-xs bg-[#191a1b] text-[#8a8f98] px-1.5 py-0.5 rounded-full">{t.count}</span>}
+            {tab === t.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5e6ad2]/60 rounded-t-full" />}
           </button>
         ))}
       </div>
 
       {tab === "overview" && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-            <h3 className="text-sm font-medium text-white mb-4">Deal Details</h3>
+          <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-5">
+            <h3 className="text-sm font-medium text-[#f7f8f8] mb-4">Deal Details</h3>
             <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
-              <div className="flex items-center gap-2 text-slate-400"><Briefcase className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{deal.name}</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><DollarSign className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{deal.value ? new Intl.NumberFormat("en-US", { style: "currency", currency: deal.currency || "USD" }).format(deal.value) : "-"}</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><BarChart3 className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{deal.probability || 0}% probability</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><Calendar className="w-4 h-4 text-slate-500" /><span className="text-slate-300">Close: {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "-"}</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><User className="w-4 h-4 text-slate-500" /><span className="text-slate-300">Contact: {deal.primaryContactId ? "Linked" : "-"}</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><Building2 className="w-4 h-4 text-slate-500" /><span className="text-slate-300">Company: {deal.companyId ? "Linked" : "-"}</span></div>
-              <div className="flex items-center gap-2 text-slate-400"><Clock className="w-4 h-4 text-slate-500" /><span className="text-slate-300">Created: {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : "-"}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><Briefcase className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">{deal.name}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><DollarSign className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">{deal.value ? new Intl.NumberFormat("en-US", { style: "currency", currency: deal.currency || "USD" }).format(deal.value) : "-"}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><BarChart3 className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">{deal.probability || 0}% probability</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><Calendar className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">Close: {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "-"}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><User className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">Contact: {deal.primaryContactId ? "Linked" : "-"}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><Building2 className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">Company: {deal.companyId ? "Linked" : "-"}</span></div>
+              <div className="flex items-center gap-2 text-[#8a8f98]"><Clock className="w-4 h-4 text-[#62666d]" /><span className="text-[#8a8f98]">Created: {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : "-"}</span></div>
             </div>
-            {deal.description && <div className="mt-4 pt-4 border-t border-slate-800 text-sm text-slate-400"><FileText className="w-4 h-4 text-slate-500 inline mr-2" />{deal.description}</div>}
-            {deal.closeReason && <div className="mt-4 pt-4 border-t border-slate-800 text-sm text-red-400">{deal.status === "lost" ? "Lost reason" : "Close reason"}: {deal.closeReason}</div>}
+            {deal.description && <div className="mt-4 pt-4 border-t border-white/[0.06] text-sm text-[#8a8f98]"><FileText className="w-4 h-4 text-[#62666d] inline mr-2" />{deal.description}</div>}
+            {deal.closeReason && <div className="mt-4 pt-4 border-t border-white/[0.06] text-sm text-red-400">{deal.status === "lost" ? "Lost reason" : "Close reason"}: {deal.closeReason}</div>}
           </div>
         </div>
       )}
 
       {tab === "activity" && (
-        <div className="bg-slate-900/60 rounded-xl border border-slate-800 p-6">
+        <div className="bg-[#0f1011] rounded-xl border border-white/[0.06] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Activity size={16} className="text-[#2B6ED2]" /> Activity Timeline</h3>
-            <button onClick={() => setShowLogActivity(true)} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 flex items-center gap-1.5 transition-colors">
+            <h3 className="text-sm font-semibold text-[#f7f8f8] flex items-center gap-2"><Activity size={16} className="text-[#5e6ad2]" /> Activity Timeline</h3>
+            <button onClick={() => setShowLogActivity(true)} className="h-8 px-3 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-xs font-medium hover:bg-[#5e6ad2] flex items-center gap-1.5 transition-colors">
               <Plus className="w-3.5 h-3.5" /> Log Activity
             </button>
           </div>
-          {activities.length === 0 && <div className="text-center text-slate-600 py-12 text-sm">No activity yet</div>}
+          {activities.length === 0 && <div className="text-center text-[#62666d] py-12 text-sm">No activity yet</div>}
           <div className="space-y-3">
             {activities.map((a, i) => (
-            <div key={a.id || i} className="flex gap-4 items-start rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div key={a.id || i} className="flex gap-4 items-start rounded-xl border border-white/[0.06] bg-[#0f1011]/40 p-4">
               {activityIcon(a.type)}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1"><span className="text-sm font-medium text-slate-200 capitalize">{a.type.replace(/_/g, " ")}</span><span className="text-xs text-slate-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ""}</span></div>
-                {a.subject && <div className="text-sm text-slate-300 mb-0.5">{a.subject}</div>}
-                {a.body && <div className="text-sm text-slate-400">{a.body}</div>}
+                <div className="flex items-center gap-2 mb-1"><span className="text-sm font-medium text-[#d0d6e0] capitalize">{a.type.replace(/_/g, " ")}</span><span className="text-xs text-[#62666d]">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ""}</span></div>
+                {a.subject && <div className="text-sm text-[#8a8f98] mb-0.5">{a.subject}</div>}
+                {a.body && <div className="text-sm text-[#8a8f98]">{a.body}</div>}
               </div>
             </div>
           ))}
@@ -195,17 +195,17 @@ export default function DealDetailPage() {
       )}
 
       {tab === "tasks" && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-          {tasks.length === 0 ? <div className="px-4 py-12 text-center text-slate-600 text-sm">No tasks</div> : (
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] overflow-hidden">
+          {tasks.length === 0 ? <div className="px-4 py-12 text-center text-[#62666d] text-sm">No tasks</div> : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-500 uppercase bg-slate-800/40"><tr><th className="px-4 py-3">Title</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Priority</th><th className="px-4 py-3">Due</th></tr></thead>
+              <thead className="text-xs text-[#62666d] uppercase bg-[#191a1b]/40"><tr><th className="px-4 py-3">Title</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Priority</th><th className="px-4 py-3">Due</th></tr></thead>
               <tbody className="divide-y divide-slate-800">
                 {tasks.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-800/30 cursor-pointer transition-colors" onClick={() => router.push(`/${workspace}/tasks/${t.id}`)}>
-                    <td className="px-4 py-3 font-medium text-slate-200">{t.title}</td>
+                  <tr key={t.id} className="hover:bg-[#191a1b]/30 cursor-pointer transition-colors" onClick={() => router.push(`/${workspace}/tasks/${t.id}`)}>
+                    <td className="px-4 py-3 font-medium text-[#d0d6e0]">{t.title}</td>
                     <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${TASK_STATUS(t.status)}`}>{t.status.replace(/_/g, " ")}</span></td>
-                    <td className="px-4 py-3 text-slate-400 capitalize">{t.priority}</td>
-                    <td className="px-4 py-3 text-slate-400">{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "-"}</td>
+                    <td className="px-4 py-3 text-[#8a8f98] capitalize">{t.priority}</td>
+                    <td className="px-4 py-3 text-[#8a8f98]">{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -217,11 +217,11 @@ export default function DealDetailPage() {
       {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowEdit(false); }}>
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"><Pencil size={14} className="text-white" /></div>
-              <h2 className="text-lg font-semibold text-white">Edit Deal</h2>
-              <button onClick={() => setShowEdit(false)} className="ml-auto p-1.5 rounded-lg hover:bg-slate-800 text-slate-500"><X size={16} /></button>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06]">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"><Pencil size={14} className="text-[#f7f8f8]" /></div>
+              <h2 className="text-lg font-semibold text-[#f7f8f8]">Edit Deal</h2>
+              <button onClick={() => setShowEdit(false)} className="ml-auto p-1.5 rounded-lg hover:bg-[#191a1b] text-[#62666d]"><X size={16} /></button>
             </div>
             <form onSubmit={saveEdit} className="p-6 space-y-4">
               <div><label className={labelCls}>Name</label><input type="text" value={editForm.name || ""} onChange={e => setEditForm({...editForm, name: e.target.value})} className={inputCls} required /></div>
@@ -240,8 +240,8 @@ export default function DealDetailPage() {
               <div><label className={labelCls}>Description</label><textarea value={editForm.description || ""} onChange={e => setEditForm({...editForm, description: e.target.value})} className={`${inputCls} h-20 resize-none`} /></div>
               {editForm.status === "lost" && <div><label className={labelCls}>Lost Reason</label><input type="text" value={editForm.closeReason || ""} onChange={e => setEditForm({...editForm, closeReason: e.target.value})} className={inputCls} /></div>}
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowEdit(false)} className="h-9 px-4 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+                <button type="button" onClick={() => setShowEdit(false)} className="h-9 px-4 rounded-lg bg-[#191a1b] text-[#8a8f98] text-sm font-medium hover:bg-[#28282c] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="h-9 px-4 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] transition-colors disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
               </div>
             </form>
           </div>
@@ -251,13 +251,13 @@ export default function DealDetailPage() {
       {/* Delete Modal */}
       {showDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowDelete(false); }}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-center space-y-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0f1011] shadow-2xl p-6 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto"><AlertTriangle size={20} className="text-red-400" /></div>
-            <h3 className="text-lg font-semibold text-white">Delete Deal</h3>
-            <p className="text-sm text-slate-400">Are you sure you want to delete <span className="text-slate-200 font-medium">{deal.name}</span>? This cannot be undone.</p>
+            <h3 className="text-lg font-semibold text-[#f7f8f8]">Delete Deal</h3>
+            <p className="text-sm text-[#8a8f98]">Are you sure you want to delete <span className="text-[#d0d6e0] font-medium">{deal.name}</span>? This cannot be undone.</p>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 h-9 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors">Cancel</button>
-              <button onClick={doDelete} disabled={deleting} className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition-colors disabled:opacity-50">{deleting ? "Deleting..." : "Delete"}</button>
+              <button onClick={() => setShowDelete(false)} className="flex-1 h-9 rounded-lg bg-[#191a1b] text-[#8a8f98] text-sm font-medium hover:bg-[#28282c] transition-colors">Cancel</button>
+              <button onClick={doDelete} disabled={deleting} className="flex-1 h-9 rounded-lg bg-red-600 text-[#f7f8f8] text-sm font-medium hover:bg-red-500 transition-colors disabled:opacity-50">{deleting ? "Deleting..." : "Delete"}</button>
             </div>
           </div>
         </div>

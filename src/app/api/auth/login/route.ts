@@ -50,7 +50,13 @@ async function loginHandler(req: NextRequest) {
       role: user.role,
     });
 
-    const response = NextResponse.json({ success: true, data: { user } });
+    const workspaceRows = await db
+      .select()
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.id, user.workspaceId));
+    const workspace = workspaceRows[0];
+
+    const response = NextResponse.json({ success: true, data: { user, workspace } });
     response.cookies.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

@@ -55,7 +55,7 @@ export default function CustomFieldsPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/custom-fields?entityType=${filterEntity !== "all" ? filterEntity : ""}`, {
+    const res = await fetch(`/api/custom-fields?entityType=${filterEntity !== "all" ? filterEntity : ""}`, { credentials: "include",
       headers: { "x-workspace-id": workspace, "x-user-id": "system" },
     });
     const json = await res.json();
@@ -79,7 +79,7 @@ export default function CustomFieldsPage() {
     try {
       const url = editing ? `/api/custom-fields/${editing.id}` : `/api/custom-fields`;
       const method = editing ? "PATCH" : "POST";
-      await fetch(url, {
+      await fetch(url, { credentials: "include",
         method,
         headers: { "Content-Type": "application/json", "x-workspace-id": workspace, "x-user-id": "system" },
         body: JSON.stringify(payload),
@@ -91,7 +91,7 @@ export default function CustomFieldsPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this custom field?")) return;
-    await fetch(`/api/custom-fields/${id}`, {
+    await fetch(`/api/custom-fields/${id}`, { credentials: "include",
       method: "DELETE",
       headers: { "x-workspace-id": workspace, "x-user-id": "system" },
     });
@@ -118,36 +118,36 @@ export default function CustomFieldsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Custom Fields</h1>
-          <p className="text-slate-500 text-sm mt-1">Add custom properties to contacts, companies and deals</p>
+          <h1 className="text-2xl font-bold text-[#f7f8f8]">Custom Fields</h1>
+          <p className="text-[#62666d] text-sm mt-1">Add custom properties to contacts, companies and deals</p>
         </div>
         <button onClick={() => { setEditing(null); setForm({ entityType:"contact", label:"", name:"", type:"text", options:"", isRequired:false, displayOrder:0 }); setShowModal(true); }}
-          className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors flex items-center gap-1.5">
+          className="h-9 px-4 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] transition-colors flex items-center gap-1.5">
           <Plus className="w-4 h-4" /> New Field
         </button>
       </div>
 
       <div className="flex items-center gap-2">
-        <select value={filterEntity} onChange={e=>setFilterEntity(e.target.value)} className="h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200">
+        <select value={filterEntity} onChange={e=>setFilterEntity(e.target.value)} className="h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0]">
           <option value="all">All entities</option>
           {ENTITY_OPTIONS.map(e=><option key={e.value} value={e.value}>{e.label}</option>)}
         </select>
-        <span className="text-xs text-slate-500 ml-2">{filtered.length} fields</span>
+        <span className="text-xs text-[#62666d] ml-2">{filtered.length} fields</span>
       </div>
 
       {loading ? (
-        <div className="animate-pulse rounded-xl border border-slate-800 bg-slate-900/60 h-32" />
+        <div className="animate-pulse rounded-xl border border-white/[0.06] bg-[#0f1011] h-32" />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center">
-          <Database className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">No custom fields yet.</p>
-          <p className="text-slate-600 text-xs mt-1">Click "New Field" to create one.</p>
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] p-8 text-center">
+          <Database className="w-8 h-8 text-[#62666d] mx-auto mb-3" />
+          <p className="text-[#8a8f98] text-sm">No custom fields yet.</p>
+          <p className="text-[#62666d] text-xs mt-1">Click "New Field" to create one.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+        <div className="rounded-xl border border-white/[0.06] bg-[#0f1011] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-white/[0.06] text-left text-xs font-semibold text-[#8a8f98] uppercase tracking-wider">
                 <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3">Label</th>
                 <th className="px-4 py-3">Name</th>
@@ -159,17 +159,17 @@ export default function CustomFieldsPage() {
             </thead>
             <tbody>
               {filtered.map((f) => (
-                <tr key={f.id} className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
-                  <td className="px-4 py-3"><GripVertical className="w-4 h-4 text-slate-600 cursor-grab" /></td>
-                  <td className="px-4 py-3 font-medium text-slate-200">{f.label}</td>
-                  <td className="px-4 py-3 text-slate-400 font-mono text-xs">{f.name}</td>
-                  <td className="px-4 py-3 text-slate-400 capitalize">{f.type}</td>
-                  <td className="px-4 py-3 text-slate-400 capitalize">{f.entityType}</td>
-                  <td className="px-4 py-3">{f.isRequired ? <span className="text-emerald-400">Yes</span> : <span className="text-slate-500">No</span>}</td>
+                <tr key={f.id} className="border-b border-white/[0.06]/60 hover:bg-[#191a1b]/40 transition-colors">
+                  <td className="px-4 py-3"><GripVertical className="w-4 h-4 text-[#62666d] cursor-grab" /></td>
+                  <td className="px-4 py-3 font-medium text-[#d0d6e0]">{f.label}</td>
+                  <td className="px-4 py-3 text-[#8a8f98] font-mono text-xs">{f.name}</td>
+                  <td className="px-4 py-3 text-[#8a8f98] capitalize">{f.type}</td>
+                  <td className="px-4 py-3 text-[#8a8f98] capitalize">{f.entityType}</td>
+                  <td className="px-4 py-3">{f.isRequired ? <span className="text-[#10b981]">Yes</span> : <span className="text-[#62666d]">No</span>}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={()=>openEdit(f)} className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-slate-200"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={()=>remove(f.id)} className="p-1.5 rounded-md hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={()=>openEdit(f)} className="p-1.5 rounded-md hover:bg-[#191a1b] text-[#8a8f98] hover:text-[#d0d6e0]"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={()=>remove(f.id)} className="p-1.5 rounded-md hover:bg-red-500/10 text-[#8a8f98] hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -181,52 +181,52 @@ export default function CustomFieldsPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-5 space-y-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#0f1011] border border-white/[0.06] shadow-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">{editing ? "Edit Custom Field" : "New Custom Field"}</h2>
-              <button onClick={()=>setShowModal(false)} className="text-slate-400 hover:text-slate-200 text-xl">×</button>
+              <h2 className="text-lg font-bold text-[#f7f8f8]">{editing ? "Edit Custom Field" : "New Custom Field"}</h2>
+              <button onClick={()=>setShowModal(false)} className="text-[#8a8f98] hover:text-[#d0d6e0] text-xl">×</button>
             </div>
             <form onSubmit={save} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Entity Type</label>
-                  <select value={form.entityType} onChange={e=>setForm({...form,entityType:e.target.value as any})} className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 appearance-none">
+                  <label className="block text-xs font-medium text-[#8a8f98] mb-1">Entity Type</label>
+                  <select value={form.entityType} onChange={e=>setForm({...form,entityType:e.target.value as any})} className="w-full h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] appearance-none">
                     {ENTITY_OPTIONS.map(e=><option key={e.value} value={e.value}>{e.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Field Type</label>
-                  <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 appearance-none">
+                  <label className="block text-xs font-medium text-[#8a8f98] mb-1">Field Type</label>
+                  <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] appearance-none">
                     {TYPE_OPTIONS.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Label</label>
-                <input required value={form.label} onChange={e=>setForm({...form,label:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/60" placeholder="e.g. LinkedIn URL" />
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">Label</label>
+                <input required value={form.label} onChange={e=>setForm({...form,label:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]" placeholder="e.g. LinkedIn URL" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">API Name (optional)</label>
-                <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/60 font-mono" placeholder="Auto-generated from label" />
+                <label className="block text-xs font-medium text-[#8a8f98] mb-1">API Name (optional)</label>
+                <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3] font-mono" placeholder="Auto-generated from label" />
               </div>
               {["select","multiselect"].includes(form.type) && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Options (comma-separated)</label>
-                  <input value={form.options} onChange={e=>setForm({...form,options:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/60" placeholder="Option 1, Option 2, Option 3" />
+                  <label className="block text-xs font-medium text-[#8a8f98] mb-1">Options (comma-separated)</label>
+                  <input value={form.options} onChange={e=>setForm({...form,options:e.target.value})} className="w-full h-9 px-3 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/[0.3]" placeholder="Option 1, Option 2, Option 3" />
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-                  <input type="checkbox" checked={form.isRequired} onChange={e=>setForm({...form,isRequired:e.target.checked})} className="rounded bg-slate-800 border-slate-600 text-emerald-500" /> Required
+                <label className="flex items-center gap-2 text-sm text-[#8a8f98] cursor-pointer">
+                  <input type="checkbox" checked={form.isRequired} onChange={e=>setForm({...form,isRequired:e.target.checked})} className="rounded bg-[#191a1b] border-white/[0.08] text-[#10b981]" /> Required
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-300">
-                  <span className="text-xs text-slate-500">Order</span>
-                  <input type="number" value={form.displayOrder} onChange={e=>setForm({...form,displayOrder:parseInt(e.target.value)||0})} className="w-16 h-8 px-2 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200" />
+                <label className="flex items-center gap-2 text-sm text-[#8a8f98]">
+                  <span className="text-xs text-[#62666d]">Order</span>
+                  <input type="number" value={form.displayOrder} onChange={e=>setForm({...form,displayOrder:parseInt(e.target.value)||0})} className="w-16 h-8 px-2 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0]" />
                 </label>
               </div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={()=>setShowModal(false)} className="flex-1 h-9 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800 transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 h-9 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50">{saving ? "Saving..." : (editing ? "Update" : "Create")}</button>
+                <button type="button" onClick={()=>setShowModal(false)} className="flex-1 h-9 rounded-lg border border-white/[0.06] text-[#8a8f98] text-sm font-medium hover:bg-[#191a1b] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 h-9 rounded-lg bg-[#5e6ad2] text-[#f7f8f8] text-sm font-medium hover:bg-[#5e6ad2] transition-colors disabled:opacity-50">{saving ? "Saving..." : (editing ? "Update" : "Create")}</button>
               </div>
             </form>
           </div>

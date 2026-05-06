@@ -30,7 +30,7 @@ export default function InviteAcceptPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`/api/invites/${token}/accept`, {
+      const res = await fetch(`/api/invites/${token}/accept`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password }),
@@ -43,20 +43,20 @@ export default function InviteAcceptPage() {
   }
 
   if (checking) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-[#08090a] flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (error && !invite) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#08090a] flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
         <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="w-6 h-6 text-amber-400" />
         </div>
         <h1 className="text-lg font-semibold text-white mb-2">Invite Unavailable</h1>
-        <p className="text-sm text-slate-500">{error}</p>
-        <a href="/login" className="mt-4 inline-block text-sm text-emerald-400 hover:text-emerald-300">Go to Login</a>
+        <p className="text-sm text-[#62666d]">{error}</p>
+        <a href="/login" className="mt-4 inline-block text-sm text-[#10b981] hover:text-emerald-300">Go to Login</a>
       </div>
     </div>
   );
@@ -64,41 +64,41 @@ export default function InviteAcceptPage() {
   const email = invite?.email || "";
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#08090a] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-xl bg-[#5e6ad2] flex items-center justify-center mb-4">
             <Briefcase className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Join Workspace</h1>
-          <p className="text-slate-500 text-sm mt-1">Set your password to continue</p>
+          <p className="text-[#62666d] text-sm mt-1">Set your password to continue</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
           {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="email" value={email} disabled className="w-full h-10 pl-9 pr-4 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-400 cursor-not-allowed" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#62666d]" />
+              <input type="email" value={email} disabled className="w-full h-10 pl-9 pr-4 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#8a8f98] cursor-not-allowed" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Full Name</label>
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#62666d]" />
               <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name"
-                className="w-full h-10 pl-9 pr-4 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
+                className="w-full h-10 pl-9 pr-4 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Password</label>
+            <label className="block text-xs font-medium text-[#8a8f98] mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#62666d]" />
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" minLength={6}
-                className="w-full h-10 pl-9 pr-4 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
+                className="w-full h-10 pl-9 pr-4 rounded-lg bg-[#0f1011] border border-white/[0.06] text-sm text-[#d0d6e0] placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full h-10 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 flex items-center justify-center">
+          <button type="submit" disabled={loading} className="w-full h-10 rounded-lg bg-[#5e6ad2] text-white text-sm font-medium hover:bg-[#5e6ad2] disabled:opacity-50 flex items-center justify-center">
             {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Join Workspace"}
           </button>
         </form>

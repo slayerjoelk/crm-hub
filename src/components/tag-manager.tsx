@@ -61,7 +61,7 @@ export function TagManager({
     if (!entityId) return;
     const [entityRes, allRes] = await Promise.all([
       fetch(`/api/tags?entityType=${entityType}&entityId=${entityId}`).then(r => r.json()),
-      fetch(`/api/tags`).then(r => r.json()),
+      fetch(`/api/tags`, { credentials: "include" }).then(r => r.json()),
     ]);
     setTags(entityRes.data || []);
     setAllTags(allRes.data || []);
@@ -87,7 +87,7 @@ export function TagManager({
   const canCreate = query.trim().length > 0 && !allTags.some(t => t.name.toLowerCase() === query.trim().toLowerCase());
 
   async function addTag(tag: TagItem) {
-    await fetch(`/api/tags/apply`, {
+    await fetch(`/api/tags/apply`, { credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ entityType, entityId, tagIds: [tag.id] }),
@@ -97,7 +97,7 @@ export function TagManager({
   }
 
   async function removeTag(tagId: string) {
-    await fetch(`/api/tags/apply`, {
+    await fetch(`/api/tags/apply`, { credentials: "include",
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ entityType, entityId, tagIds: [tagId] }),
@@ -109,7 +109,7 @@ export function TagManager({
     const name = query.trim();
     if (!name) return;
     setCreating(true);
-    const res = await fetch(`/api/tags`, {
+    const res = await fetch(`/api/tags`, { credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)] }),
@@ -126,37 +126,37 @@ export function TagManager({
     <div className="relative" ref={popoverRef}>
       <div className="flex flex-wrap items-center gap-2">
         {tags.map(t => <TagChip key={t.id} tag={t} removable onRemove={() => removeTag(t.id)} />)}
-        <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 transition-colors">
+        <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-[#191a1b] text-[#8a8f98] border border-white/[0.06] hover:bg-[#28282c] transition-colors">
           <Plus size={12} /> Add tag
         </button>
       </div>
       {open && (
-        <div className="absolute z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl p-3 space-y-2">
+        <div className="absolute z-50 mt-2 w-64 rounded-xl border border-white/[0.06] bg-[#0f1011] shadow-2xl p-3 space-y-2">
           <div className="relative">
-            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#62666d]" />
             <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search or create tag..."
-              className="w-full h-8 pl-8 pr-3 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40" />
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[#191a1b] border border-white/[0.06] text-xs text-[#d0d6e0] placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40" />
           </div>
           {filtered.length > 0 && (
             <div className="max-h-40 overflow-y-auto space-y-1">
               {filtered.map(t => (
                 <button key={t.id} onClick={() => addTag(t)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-800 text-left transition-colors">
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#191a1b] text-left transition-colors">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ background: t.color }} />
-                  <span className="text-xs text-slate-300">{t.name}</span>
+                  <span className="text-xs text-[#8a8f98]">{t.name}</span>
                 </button>
               ))}
             </div>
           )}
           {canCreate && (
             <button onClick={createTag} disabled={creating}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-800 text-left transition-colors disabled:opacity-50">
-              <Plus size={14} className="text-slate-400" />
-              <span className="text-xs text-slate-300">Create "{query.trim()}"</span>
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#191a1b] text-left transition-colors disabled:opacity-50">
+              <Plus size={14} className="text-[#8a8f98]" />
+              <span className="text-xs text-[#8a8f98]">Create "{query.trim()}"</span>
             </button>
           )}
           {!canCreate && filtered.length === 0 && query.trim() === "" && (
-            <div className="text-xs text-slate-500 text-center py-2">Type to search or create a tag</div>
+            <div className="text-xs text-[#62666d] text-center py-2">Type to search or create a tag</div>
           )}
         </div>
       )}
