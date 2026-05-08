@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Building2, X, Globe, Users } from "lucide-react";
+import { Plus, Building2, X, Globe, Users, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/crm/data-table";
 import { CsvExportButton } from "@/components/crm/csv-export-button";
 import { CustomFieldsSection } from "@/components/crm/custom-fields-section";
@@ -86,7 +86,14 @@ export default function CompaniesPage() {
       </div>
 
       <div className="rounded-lg border border-white/[0.06] bg-[#0f1011]/50 overflow-hidden">
-        <DataTable columns={columns} data={companies} rowKey="id" onRowClick={(c)=>router.push(`./companies/${c.id}`)} />
+        <DataTable columns={columns} data={companies} rowKey="id" onRowClick={(c)=>router.push(`./companies/${c.id}`)}
+          bulkActions={[
+            { label: "Delete", icon: <Trash2 className="w-3.5 h-3.5" />, action: async (ids) => {
+              for (const id of ids) await fetch(`/api/companies/${id}`, { credentials: "include", method: "DELETE" });
+              setCompanies(prev => prev.filter(c => !ids.includes(c.id)));
+            }, danger: true }
+          ]}
+        />
       </div>
 
       {showModal && (
