@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const apiKey = req.headers.get("x-api-key");
     const workspaceSlug = req.headers.get("x-workspace-slug") ||
       req.nextUrl.searchParams.get("workspace") ||
-      "default";
+      "claraccord";
 
     if (apiKey) {
       // Look up integration by API key

@@ -16,6 +16,8 @@ const PUBLIC_PREFIXES = [
   "/demo",
   "/pricing",
   "/api/auth",
+  "/api/capture",
+  "/api/widget.js",
   "/_next",
   "/favicon.ico",
   "/logo",
