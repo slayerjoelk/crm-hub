@@ -1,42 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { scoreContact } from "@/lib/automation/lead-scoring";
 import { triggerWebhooks } from "@/lib/automation/webhooks";
+import { enrollInSequence } from "@/lib/automation/sequence-engine";
 
 /* ────────────────────────────────────────────
-   Public Lead Capture API
+   Lead Capture → Full Pipeline
    
-   Accepts leads from ANY source (website forms,
-   landing pages, third-party integrations).
-   
-   Rate-limited. Workspace identified by
-   API key or workspace slug.
-   
-   POST /api/capture
-   Headers: x-api-key or x-workspace-slug
-   Body: { email, firstName?, lastName?, phone?,
-           sourceType?, sourceDetail?, company?,
-           tags?: string[], metadata?: {} }
+   On POST: 
+   1. Create/update contact
+   2. Apply tags
+   3. Score contact
+   4. Auto-enroll in welcome sequence (if exists)
+   5. Create follow-up task
+   6. Fire webhooks
+   7. Send notification to workspace owner
    ─────────────────────────────────────────── */
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth: API key or workspace slug
     const apiKey = req.headers.get("x-api-key");
     const workspaceSlug = req.headers.get("x-workspace-slug") ||
       req.nextUrl.searchParams.get("workspace") ||
       "claraccord";
 
     if (apiKey) {
-      // Look up integration by API key
-      const integrations = await db.select()
-        .from(schema.integrations)
-        .where(eq(schema.integrations.config, apiKey));
-      // TODO: proper API key hashing/verification
+      await db.select().from(schema.integrations).where(eq(schema.integrations.config, apiKey));
     }
 
-    // Resolve workspace
     const [workspace] = await db.select()
       .from(schema.workspaces)
       .where(eq(schema.workspaces.slug, workspaceSlug.toLowerCase().trim()));
@@ -62,11 +54,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "email is required" }, { status: 400 });
     }
 
-    // Get a valid user for the workspace (for activity authorship)
     const [anyUser] = await db.select()
       .from(schema.users)
       .where(eq(schema.users.workspaceId, workspace.id));
-    const userId = anyUser?.id || "system";
+    const userId = anyUser?.id || "";
 
     // Check for duplicates
     const [existing] = await db.select()
@@ -74,112 +65,79 @@ export async function POST(req: NextRequest) {
       .where(eq(schema.contacts.email, email.toLowerCase().trim()));
 
     if (existing && existing.workspaceId === workspace.id) {
-      // Update existing contact with new data
       await db.update(schema.contacts)
-        .set({
-          sourceType: sourceType || existing.sourceType,
-          sourceDetail: sourceDetail || existing.sourceDetail,
-          lastActivityAt: new Date(),
-          updatedAt: new Date(),
-        })
+        .set({ sourceType: sourceType || existing.sourceType, sourceDetail: sourceDetail || existing.sourceDetail, lastActivityAt: new Date(), updatedAt: new Date() })
         .where(eq(schema.contacts.id, existing.id));
-
-      return NextResponse.json({
-        success: true,
-        data: { id: existing.id, email: existing.email, firstName: existing.firstName, lastName: existing.lastName },
-        duplicate: true,
-      });
+      return NextResponse.json({ success: true, data: { id: existing.id, email: existing.email }, duplicate: true });
     }
 
     // Create or find company
     let companyId: string | undefined;
     if (companyName) {
-      const [existingCompany] = await db.select()
-        .from(schema.companies)
-        .where(eq(schema.companies.name, companyName.trim()));
-
-      if (existingCompany && existingCompany.workspaceId === workspace.id) {
-        companyId = existingCompany.id;
-      } else {
-        const [newCompany] = await db.insert(schema.companies)
-          .values({
-            workspaceId: workspace.id,
-            name: companyName.trim(),
-            type: "prospect",
-          })
-          .returning();
-        companyId = newCompany.id;
+      const [ec] = await db.select().from(schema.companies).where(eq(schema.companies.name, companyName.trim()));
+      if (ec && ec.workspaceId === workspace.id) companyId = ec.id;
+      else {
+        const [nc] = await db.insert(schema.companies).values({ workspaceId: workspace.id, name: companyName.trim(), type: "prospect" }).returning();
+        companyId = nc.id;
       }
     }
 
-    // Build contact
+    // Create contact
     const [contact] = await db.insert(schema.contacts)
-      .values({
-        workspaceId: workspace.id,
-        firstName,
-        lastName,
-        email: email.toLowerCase().trim(),
-        phone: phone || undefined,
-        sourceType,
-        sourceDetail,
-        lifecycleStage: "subscriber",
-        leadStatus: "new",
-        companyId,
-        lastActivityAt: new Date(),
-      })
+      .values({ workspaceId: workspace.id, firstName, lastName, email: email.toLowerCase().trim(), phone: phone || undefined, sourceType, sourceDetail, lifecycleStage: "subscriber", leadStatus: "new", companyId, lastActivityAt: new Date() })
       .returning();
 
     // Log activity
-    await db.insert(schema.activities).values({
-      workspaceId: workspace.id,
-      userId,
-      type: "contact_created",
-      contactId: contact.id,
-      body: `New lead captured via ${sourceDetail}. Source: ${sourceType}`,
-      metadata: JSON.stringify(metadata),
-    });
+    if (userId) {
+      await db.insert(schema.activities).values({ workspaceId: workspace.id, userId, type: "contact_created", contactId: contact.id, body: `New lead: ${firstName} ${lastName} (${email}). Source: ${sourceDetail}.`, metadata: JSON.stringify(metadata) });
+    }
 
     // Apply tags
     if (tagNames.length > 0) {
       for (const tagName of tagNames) {
-        let [tag] = await db.select()
-          .from(schema.tags)
-          .where(eq(schema.tags.name, tagName));
-
-        if (!tag) {
-          [tag] = await db.insert(schema.tags)
-            .values({ workspaceId: workspace.id, name: tagName, color: "#3b82f6" })
-            .returning();
-        }
-
-        await db.insert(schema.tagRelations)
-          .values({ tagId: tag.id, entityType: "contact", entityId: contact.id });
+        let [tag] = await db.select().from(schema.tags).where(and(eq(schema.tags.name, tagName), eq(schema.tags.workspaceId, workspace.id)));
+        if (!tag) [tag] = await db.insert(schema.tags).values({ workspaceId: workspace.id, name: tagName, color: "#3b82f6" }).returning();
+        await db.insert(schema.tagRelations).values({ tagId: tag.id, entityType: "contact", entityId: contact.id });
       }
     }
 
     // Auto-score
-    try { await scoreContact(contact.id); } catch {}
+    let contactScore = 0;
+    try { const r = await scoreContact(contact.id); contactScore = r.total; } catch {}
 
-    // Trigger webhooks
+    // Auto-enroll in welcome sequence
+    let enrollment = null;
     try {
-      await triggerWebhooks(workspace.id, "contact.created", "contact", contact.id, {
-        email: contact.email,
-        name: `${firstName} ${lastName}`.trim(),
-        source: sourceType,
-      });
+      const seqs = await db.select().from(schema.sequences).where(and(eq(schema.sequences.workspaceId, workspace.id), eq(schema.sequences.status, "active")));
+      for (const seq of seqs) {
+        if (seq.type === "cold_outreach" || seq.name.toLowerCase().includes("welcome")) {
+          enrollment = await enrollInSequence(seq.id, contact.id);
+          if (enrollment.enrolled) {
+            await db.insert(schema.activities).values({ workspaceId: workspace.id, userId, type: "integration", contactId: contact.id, body: `Auto-enrolled in sequence: ${seq.name}` });
+            break;
+          }
+        }
+      }
     } catch {}
 
-    return NextResponse.json({
-      success: true,
-      data: contact,
-    }, { status: 201 });
+    // Create follow-up task
+    try {
+      await db.insert(schema.tasks).values({ workspaceId: workspace.id, userId, title: `Follow up: ${firstName} ${lastName}`.trim(), description: `New lead from ${sourceDetail}. Score: ${contactScore}/100.`, contactId: contact.id, status: "todo", priority: contactScore > 70 ? "high" : "medium", dueDate: new Date(Date.now() + 86400000) });
+    } catch {}
+
+    // Fire webhooks
+    try { await triggerWebhooks(workspace.id, "contact.created", "contact", contact.id, { email: contact.email, name: `${firstName} ${lastName}`.trim(), source: sourceType, score: contactScore }); } catch {}
+
+    // Notify workspace
+    try { if (userId) await db.insert(schema.notifications).values({ workspaceId: workspace.id, userId, type: "contact", title: "New lead captured", body: `${firstName} ${lastName} (${email}) from ${sourceDetail}` }); } catch {}
+
+    return NextResponse.json({ success: true, data: { ...contact, leadScore: contactScore, enrolled: enrollment?.enrolled || false } }, { status: 201 });
   } catch (e: any) {
     console.error("Capture error:", e);
     return NextResponse.json({ error: "Capture failed" }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
-  // Health check
+export async function GET() {
   return NextResponse.json({ status: "ok", endpoint: "CRM Hub Lead Capture" });
 }

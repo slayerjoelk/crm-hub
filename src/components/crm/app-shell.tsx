@@ -7,8 +7,8 @@ import { CommandPalette } from "@/components/crm/command-palette";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, BarChart3, CheckSquare, Activity, Settings, LogOut,
-  ChevronLeft, Plus, Search, Bell, Briefcase, Tag, Mail, FolderOpen, Zap, Upload,
-  Menu, X, KanbanSquare, Crown
+  ChevronLeft, Plus, Search, Bell, Zap, Mail, FolderOpen, Upload,
+  Menu, X, KanbanSquare, Crown, Tag, Sparkles, ChevronDown
 } from "lucide-react";
 
 const navSections = [
@@ -29,6 +29,7 @@ const navSections = [
       { label: "Activities", icon: Activity, href: "/activities" },
       { label: "Emails", icon: Mail, href: "/emails" },
       { label: "Sequences", icon: FolderOpen, href: "/sequences" },
+      { label: "Automation", icon: Zap, href: "/automation" },
     ],
   },
   {
@@ -54,43 +55,34 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
   const [mobileMenu, setMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  async function loadNotifications() {
-    try {
-      const res = await fetch("/api/notifications", { credentials: "include" });
-      if (!res.ok) return;
-      const json = await res.json();
-      setNotifications(json.data ?? []);
-    } catch { /* ignore */ }
-  }
+  useEffect(() => {
+    fetch("/api/notifications", { credentials: "include" })
+      .then(r => r.json()).then(j => setNotifications(j.data ?? [])).catch(() => {});
+    const iv = setInterval(() => {
+      fetch("/api/notifications", { credentials: "include" })
+        .then(r => r.json()).then(j => setNotifications(j.data ?? [])).catch(() => {});
+    }, 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   async function markRead(id: string) {
-    await fetch("/api/notifications", { credentials: "include",
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, read: true }),
-    });
+    await fetch("/api/notifications", { credentials: "include", method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, read: true }) });
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }
 
   useEffect(() => {
-    loadNotifications();
-    const iv = setInterval(loadNotifications, 30_000);
-    return () => clearInterval(iv);
-  }, []);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
-    }
-    if (notifOpen) document.addEventListener("mousedown", onClick);
+    function onClick(e: MouseEvent) { if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false); if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenu(false); }
+    document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
-  }, [notifOpen]);
+  }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { credentials: "include", method: "POST" });
@@ -98,202 +90,152 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
     router.push("/login");
   }
 
-  const sidebarWidth = collapsed ? "w-14" : "w-56";
-
-  function NavItem({ item }: { item: typeof navSections[0]["items"][0] }) {
-    const isActive = pathname === `/${workspaceSlug}${item.href}` || pathname.startsWith(`/${workspaceSlug}${item.href}/`);
-    const href = `/${workspaceSlug}${item.href}`;
-    return (
-      <Link
-        key={item.label}
-        href={href}
-        onClick={() => setMobileMenu(false)}
-        className={cn(
-          "group flex items-center gap-2.5 h-8 px-3 mx-2 rounded-md text-[12px] font-medium transition-all duration-150",
-          isActive
-            ? "bg-[#5e6ad2]/10 text-[#5e6ad2]"
-            : "text-[#8a8f98] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#d0d6e0]"
-        )}
-        title={collapsed ? item.label : undefined}
-      >
-        <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-        {!collapsed && <span className="truncate">{item.label}</span>}
-        {isActive && !collapsed && <span className="ml-auto w-1 h-1 rounded-full bg-[#5e6ad2]" />}
-      </Link>
-    );
-  }
+  const isActive = (href: string) => pathname === `/${workspaceSlug}${href}` || pathname.startsWith(`/${workspaceSlug}${href}/`);
 
   return (
-    <div className="flex h-screen bg-[#08090a] overflow-hidden" suppressHydrationWarning>
+    <div className="flex h-screen bg-[#0a0a0b] overflow-hidden" suppressHydrationWarning>
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={cn("hidden md:flex flex-col bg-[#08090a] border-r border-white/[0.06] transition-all duration-200", sidebarWidth)}>
-        <div className="h-12 flex items-center px-3 shrink-0">
-          <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[#5e6ad2]">
-            <Briefcase className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
+      <aside className={cn("hidden md:flex flex-col bg-[#0a0a0b] border-r border-zinc-800/50 transition-all duration-300", collapsed ? "w-16" : "w-60")}>
+        <div className={cn("flex items-center gap-3 px-4 shrink-0", collapsed ? "h-14 justify-center" : "h-14")}>
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
           </div>
-          {!collapsed && (
-            <span className="ml-2.5 text-[13px] font-semibold text-[#f7f8f8] tracking-tight truncate">
-              CRM Hub
-            </span>
-          )}
+          {!collapsed && <span className="text-[15px] font-bold text-white tracking-tight">CRM Hub</span>}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-2 space-y-4">
+        <div className="flex-1 overflow-y-auto py-3 space-y-5">
           {navSections.map(section => (
             <div key={section.label}>
-              {!collapsed && (
-                <div className="px-5 mb-1">
-                  <span className="text-[10px] font-semibold text-[#62666d] uppercase tracking-wider">{section.label}</span>
-                </div>
-              )}
-              <div className="space-y-0.5">
-                {section.items.map(item => <NavItem key={item.label} item={item} />)}
+              {!collapsed && <div className="px-5 mb-1.5"><span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.12em]">{section.label}</span></div>}
+              {collapsed && <div className="mb-2 border-t border-zinc-800/50 mx-4" />}
+              <div className="space-y-0.5 px-2">
+                {section.items.map(item => (
+                  <Link key={item.label} href={`/${workspaceSlug}${item.href}`} onClick={() => setMobileMenu(false)}
+                    className={cn(
+                      "group flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-200",
+                      isActive(item.href)
+                        ? "bg-violet-500/10 text-violet-400"
+                        : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200",
+                      collapsed && "justify-center px-0"
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.5} />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {isActive(item.href) && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />}
+                  </Link>
+                ))}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="p-2 border-t border-white/[0.06]">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden md:flex items-center justify-center w-full h-8 rounded-md text-[#62666d] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#8a8f98] transition-all duration-150"
-            title={collapsed ? "Expand" : "Collapse"}
-          >
-            <ChevronLeft className={cn("w-4 h-4 transition-transform duration-200", collapsed && "rotate-180")} />
+        <div className="p-3 border-t border-zinc-800/50">
+          <button onClick={() => setCollapsed(!collapsed)}
+            className={cn("w-full h-9 rounded-lg flex items-center gap-2.5 text-zinc-500 hover:bg-zinc-800/40 hover:text-zinc-300 transition-all text-[13px] font-medium",
+              collapsed ? "justify-center" : "px-3"
+            )}>
+            <ChevronLeft className={cn("w-4 h-4 transition-transform duration-300", collapsed && "rotate-180")} />
+            {!collapsed && "Collapse"}
           </button>
-          <button
-            onClick={logout}
-            className={cn(
-              "flex items-center gap-2.5 h-8 px-3 mx-2 mt-1 rounded-md text-[12px] font-medium text-[#8a8f98] hover:text-[#ef4444] hover:bg-red-500/5 transition-all duration-150",
-              collapsed && "justify-center mx-0"
-            )}
-            title={collapsed ? "Logout" : undefined}
-          >
-            <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            {!collapsed && <span>Logout</span>}
+          <button onClick={logout}
+            className={cn("w-full h-9 rounded-lg flex items-center gap-2.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all text-[13px] font-medium mt-1",
+              collapsed ? "justify-center" : "px-3"
+            )}>
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
+            {!collapsed && "Logout"}
           </button>
         </div>
       </aside>
 
-      {/* ── MOBILE SIDEBAR OVERLAY ── */}
-      {mobileMenu && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" onClick={() => setMobileMenu(false)} />
-      )}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-56 bg-[#0f1011] border-r border-white/[0.06] transform transition-transform md:hidden flex flex-col",
-        mobileMenu ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="h-12 flex items-center justify-between px-3 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[#5e6ad2]">
-              <Briefcase className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
-            </div>
-            <span className="text-[13px] font-semibold text-[#f7f8f8]">CRM Hub</span>
-          </div>
-          <button onClick={() => setMobileMenu(false)} className="p-1.5 rounded-md hover:bg-[rgba(255,255,255,0.04)] text-[#62666d]">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto py-2 space-y-4">
-          {navSections.map(section => (
-            <div key={section.label}>
-              <div className="px-5 mb-1">
-                <span className="text-[10px] font-semibold text-[#62666d] uppercase tracking-wider">{section.label}</span>
-              </div>
-              <div className="space-y-0.5">
-                {section.items.map(item => <NavItem key={item.label} item={item} />)}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-2 border-t border-white/[0.06]">
-          <button
-            onClick={() => { setMobileMenu(false); logout(); }}
-            className="flex items-center gap-2.5 h-8 px-3 mx-2 w-full rounded-md text-[12px] font-medium text-[#8a8f98] hover:text-[#ef4444] hover:bg-red-500/5 transition-all"
-          >
-            <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* ── MAIN AREA ── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 flex items-center justify-between px-4 md:px-5 border-b border-white/[0.06] bg-[#08090a] shrink-0">
+      {/* ── MOBILE OVERLAY ── */}
+      {mobileMenu && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden" onClick={() => setMobileMenu(false)} />}
+      <aside className={cn("fixed inset-y-0 left-0 z-50 w-60 bg-[#0f0f10] border-r border-zinc-800/50 transform transition-transform duration-300 md:hidden flex flex-col", mobileMenu ? "translate-x-0" : "-translate-x-full")}>
+        <div className="h-14 flex items-center justify-between px-4 shrink-0">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenu(true)}
-              className="md:hidden p-2 rounded-md hover:bg-[rgba(255,255,255,0.04)] text-[#62666d] transition-colors"
-            >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+            </div>
+            <span className="text-[15px] font-bold text-white">CRM Hub</span>
+          </div>
+          <button onClick={() => setMobileMenu(false)} className="p-2 rounded-lg hover:bg-zinc-800/50 text-zinc-500"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto py-3 space-y-5">
+          {navSections.map(section => (
+            <div key={section.label}>
+              <div className="px-5 mb-1.5"><span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.12em]">{section.label}</span></div>
+              <div className="space-y-0.5 px-2">
+                {section.items.map(item => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <Link key={item.label} href={`/${workspaceSlug}${item.href}`} onClick={() => setMobileMenu(false)}
+                      className={cn("flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all", isActive(item.href) ? "bg-violet-500/10 text-violet-400" : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200")}>
+                      <ItemIcon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.5} />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 flex items-center justify-between px-5 border-b border-zinc-800/50 bg-[#0a0a0b] shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setMobileMenu(true)} className="md:hidden p-2 rounded-lg hover:bg-zinc-800/40 text-zinc-400">
               <Menu className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => typeof window !== 'undefined' && window.dispatchEvent(new KeyboardEvent('keydown', { metaKey: true, key: 'k' }))}
-              className="hidden md:flex items-center gap-2 h-8 px-3 rounded-md text-[12px] text-[#62666d] border border-white/[0.06] hover:border-white/[0.10] hover:text-[#8a8f98] transition-all"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>Search</span>
-              <span className="text-[10px] font-medium text-[#62666d] border border-white/[0.08] bg-white/[0.02] rounded px-1.5 py-0.5 ml-1">⌘K</span>
+            <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { metaKey: true, key: "k" }))}
+              className="hidden md:flex items-center gap-2.5 h-9 px-4 rounded-xl bg-zinc-900/80 border border-zinc-800/50 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 transition-all">
+              <Search className="w-4 h-4" strokeWidth={1.5} />
+              <span>Search anything...</span>
+              <kbd className="ml-2 text-[11px] font-medium text-zinc-500 bg-zinc-800/80 rounded-md px-1.5 py-0.5 border border-zinc-700/50">⌘K</kbd>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href={`/${workspaceSlug}/contacts/new`}
-              className="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-md text-[12px] font-medium text-white bg-[#5e6ad2] hover:bg-[#828fff] transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
+            <Link href={`/${workspaceSlug}/contacts`}
+              className="hidden md:flex items-center gap-2 h-9 px-4 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white text-[13px] font-semibold hover:from-violet-400 hover:to-indigo-500 hover:shadow-lg hover:shadow-violet-500/25 transition-all">
+              <Plus className="w-4 h-4" />
               Add Contact
             </Link>
 
             <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => setNotifOpen(v => !v)}
-                className="relative w-8 h-8 rounded-md flex items-center justify-center hover:bg-[rgba(255,255,255,0.04)] text-[#62666d] hover:text-[#8a8f98] transition-all"
-              >
-                <Bell className="w-4 h-4" strokeWidth={1.5} />
+              <button onClick={() => setNotifOpen(v => !v)}
+                className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-zinc-800/40 text-zinc-400 hover:text-zinc-200 transition-all">
+                <Bell className="w-[18px] h-[18px]" strokeWidth={1.5} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[14px] h-3.5 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white bg-[#ef4444]">
+                  <span className="absolute top-1 right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[10px] font-bold text-white bg-red-500 shadow-sm">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 rounded-xl overflow-hidden z-50 bg-[#0f1011] border border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
-                  <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
-                    <span className="text-[12px] font-semibold text-[#d0d6e0]">Notifications</span>
+                <div className="absolute right-0 mt-2 w-80 rounded-2xl overflow-hidden z-50 border border-zinc-800/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/50">
+                  <div className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
+                    <span className="text-[13px] font-semibold text-white">Notifications</span>
                     {unreadCount > 0 && (
-                      <button
-                        onClick={async () => {
-                          await Promise.all(notifications.filter(n => !n.read).map(n => markRead(n.id)));
-                          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-                        }}
-                        className="text-[11px] font-medium text-[#5e6ad2] hover:text-[#828fff] transition-colors"
-                      >
-                        Mark all read
-                      </button>
+                      <button onClick={async () => { await Promise.all(notifications.filter(n => !n.read).map(n => markRead(n.id))); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); }}
+                        className="text-[11px] font-medium text-violet-400 hover:text-violet-300">Mark all read</button>
                     )}
                   </div>
                   <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 && (
-                      <div className="px-4 py-6 text-center text-[12px] text-[#62666d]">No notifications yet</div>
-                    )}
+                    {notifications.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-zinc-500">No notifications</div>}
                     {notifications.map(n => (
-                      <div
-                        key={n.id}
-                        onClick={() => { if (!n.read) markRead(n.id); if (n.link) router.push(n.link); }}
-                        className={cn(
-                          "px-4 py-2.5 border-b border-white/[0.04] cursor-pointer hover:bg-[rgba(255,255,255,0.02)] transition-colors",
-                          !n.read && "bg-[rgba(255,255,255,0.02)]"
-                        )}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <span className={cn("mt-1 w-1.5 h-1.5 rounded-full shrink-0", n.read ? "bg-[#62666d]" : "bg-[#5e6ad2]")} />
+                      <div key={n.id} onClick={() => { if (!n.read) markRead(n.id); }}
+                        className={cn("px-4 py-3 border-b border-zinc-800/30 cursor-pointer hover:bg-zinc-800/30 transition-colors", !n.read && "bg-zinc-800/20")}>
+                        <div className="flex items-start gap-3">
+                          <span className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0", n.read ? "bg-zinc-700" : "bg-violet-400")} />
                           <div className="min-w-0">
-                            <div className="text-[12px] font-medium text-[#d0d6e0]">{n.title}</div>
-                            <div className="text-[11px] text-[#62666d] truncate">{n.message}</div>
-                            <div className="text-[10px] text-[#62666d] mt-0.5">{new Date(n.createdAt).toLocaleString()}</div>
+                            <div className="text-[13px] font-medium text-zinc-200">{n.title ?? n.type}</div>
+                            <div className="text-[12px] text-zinc-500 mt-0.5">{n.body}</div>
+                            <div className="text-[10px] text-zinc-600 mt-1">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}</div>
                           </div>
                         </div>
                       </div>
@@ -303,22 +245,34 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
               )}
             </div>
 
-            <button
-              onClick={() => router.push(`/${workspaceSlug}/settings/profile`)}
-              className="flex items-center gap-2 hover:bg-[rgba(255,255,255,0.04)] rounded-md px-2 py-1 transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white bg-white/[0.06]">
-                {user?.name?.[0]?.toUpperCase?.() ?? "U"}
-              </div>
-              <div className="hidden md:block leading-tight text-left">
-                <div className="text-[12px] font-medium text-[#f7f8f8]">{user?.name ?? "User"}</div>
-                <div className="text-[10px] text-[#62666d]">{user?.role ?? "Member"}</div>
-              </div>
-            </button>
+            <div className="relative" ref={userRef}>
+              <button onClick={() => setUserMenu(v => !v)}
+                className="flex items-center gap-2.5 hover:bg-zinc-800/40 rounded-xl px-2 py-1.5 transition-all ml-1">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-700 flex items-center justify-center text-[12px] font-semibold text-white border border-zinc-600/50">
+                  {(user?.name?.[0] ?? "U").toUpperCase()}
+                </div>
+                <div className="hidden md:block leading-tight text-left">
+                  <div className="text-[13px] font-medium text-zinc-200">{user?.name ?? "User"}</div>
+                  <div className="text-[11px] text-zinc-500">{user?.role ?? "Member"}</div>
+                </div>
+                <ChevronDown className="hidden md:block w-3.5 h-3.5 text-zinc-500" />
+              </button>
+
+              {userMenu && (
+                <div className="absolute right-0 mt-2 w-48 rounded-xl overflow-hidden z-50 border border-zinc-800/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/50 py-1">
+                  <button onClick={() => { router.push(`/${workspaceSlug}/settings`); setUserMenu(false); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] text-zinc-300 hover:bg-zinc-800/40 transition-colors">Settings</button>
+                  <button onClick={() => { setUserMenu(false); logout(); }}
+                    className="w-full text-left px-4 py-2.5 text-[13px] text-red-400 hover:bg-red-500/10 transition-colors">Log out</button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-5 bg-[#08090a]">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0b]">
+          <div className="p-6 md:p-8">{children}</div>
+        </main>
         <CommandPalette />
       </div>
     </div>

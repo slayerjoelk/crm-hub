@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/pricing",
   "/api/auth",
   "/api/capture",
+  "/api/automation/cron",
   "/api/widget.js",
   "/_next",
   "/favicon.ico",
