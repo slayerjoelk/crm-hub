@@ -20,7 +20,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 border-b border-white/[0.06] pb-1">
+      <div className="flex items-center gap-2 border-b border-zinc-800/60 pb-1">
         {TABS.map(tab => {
           const fullPath = `/${workspace}/settings${tab.href}`;
           const isActive = pathname === fullPath || (tab.href === "" && pathname === `/${workspace}/settings`);
@@ -31,8 +31,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-[1px]",
                 isActive
-                  ? "text-[#10b981] border-emerald-500"
-                  : "text-[#8a8f98] border-transparent hover:text-[#d0d6e0] hover:border-white/[0.06]"
+                  ? "text-violet-400 border-violet-500"
+                  : "text-zinc-400 border-transparent hover:text-zinc-300 hover:border-zinc-700/80"
               )}
             >
               <tab.icon className="w-4 h-4" /> {tab.label}
