@@ -1,13 +1,6 @@
+import { randomUUID } from "crypto";
 import { sqliteTable, text, integer, real, primaryKey, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
-// Simple CUID-like random ID (until @paralleldrive/cuid2 is installed)
-function randId(): string {
-const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-let id = "c";
-for (let i = 0; i < 24; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
-return id;
-}
-const createId = randId;
 /* =========================================================
 CRM-HUB Multi-Tenant Database Schema
 Every table has a workspaceId FK. Row-level security
@@ -15,7 +8,7 @@ is enforced in application layer (middleware + RLS views).
 ========================================================= */
 // ── BUSINESSES ────────────────────────────────────────────
 export const businesses = sqliteTable("businesses", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 slug: text("slug").notNull().unique(),          // e.g. "claraccord"
 name: text("name").notNull(),                  // e.g. "ClarAccord"
 domain: text("domain"),                         // e.g. "claraccord.com"
@@ -27,7 +20,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 
 // ── TENANT / WORKSPACE ────────────────────────────────────
 export const workspaces = sqliteTable("workspaces", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 slug: text("slug").notNull().unique(),          // e.g. "mintagree"
 name: text("name").notNull(),                  // e.g. "MintAgree"
 // Multi-business support
@@ -47,7 +40,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── USER (belongs to workspace) ─────────────────────────
 export const users = sqliteTable("users", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 email: text("email").notNull(),
 name: text("name"),
@@ -64,7 +57,7 @@ uqEmailWorkspace: unique().on(t.workspaceId, t.email),
 }));
 // ── SESSIONS ────────────────────────────────────────────
 export const sessions = sqliteTable("sessions", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 token: text("token").notNull().unique(),
 expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
@@ -75,7 +68,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── CONTACTS ────────────────────────────────────────────
 export const contacts = sqliteTable("contacts", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
 // Identity
@@ -121,7 +114,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── COMPANIES (Account/Organization) ────────────────────
 export const companies = sqliteTable("companies", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
 name: text("name").notNull(),
@@ -158,7 +151,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── DEALS (Pipeline Opportunities) ──────────────────────
 export const deals = sqliteTable("deals", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
 name: text("name").notNull(),
@@ -190,7 +183,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── PIPELINES ─────────────────────────────────────────────
 export const pipelines = sqliteTable("pipelines", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 name: text("name").notNull(),
 description: text("description"),
@@ -203,7 +196,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── PIPELINE STAGES ─────────────────────────────────────
 export const pipelineStages = sqliteTable("pipeline_stages", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 pipelineId: text("pipeline_id").notNull().references(() => pipelines.id, { onDelete: "cascade" }),
 name: text("name").notNull(),
 description: text("description"),
@@ -216,7 +209,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── ACTIVITIES (timeline events) ────────────────────────
 export const activities = sqliteTable("activities", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 type: text("type", {
@@ -234,7 +227,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── TASKS ───────────────────────────────────────────────
 export const tasks = sqliteTable("tasks", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 title: text("title").notNull(),
@@ -257,7 +250,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── EMAILS (synced / sent) ──────────────────────────────
 export const emails = sqliteTable("emails", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 // Header
 fromEmail: text("from_email").notNull(),
@@ -288,7 +281,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── SEQUENCES (email campaigns / drip sequences) ────────
 export const sequences = sqliteTable("sequences", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 name: text("name").notNull(),
@@ -304,7 +297,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 export const sequenceSteps = sqliteTable("sequence_steps", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 sequenceId: text("sequence_id").notNull().references(() => sequences.id, { onDelete: "cascade" }),
 stepNumber: integer("step_number").notNull(),
 subject: text("subject").notNull(),
@@ -316,7 +309,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── SEQUENCE ENROLLMENTS ────────────────────────────────
 export const sequenceEnrollments = sqliteTable("sequence_enrollments", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 sequenceId: text("sequence_id").notNull().references(() => sequences.id, { onDelete: "cascade" }),
 contactId: text("contact_id").notNull().references(() => contacts.id, { onDelete: "cascade" }),
 status: text("status", { enum: ["active", "completed", "paused", "bounced", "unsubscribed", "replied"] }).default("active"),
@@ -326,7 +319,7 @@ completedAt: integer("completed_at", { mode: "timestamp" }),
 });
 // ── TAGS ────────────────────────────────────────────────
 export const tags = sqliteTable("tags", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 name: text("name").notNull(),
 color: text("color").default("#3b82f6"),
@@ -345,7 +338,7 @@ pk: primaryKey({ columns: [t.tagId, t.entityType, t.entityId] }),
 }));
 // ── CUSTOM PROPERTIES (extend any object) ───────────────
 export const customProperties = sqliteTable("custom_properties", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 entityType: text("entity_type", { enum: ["contact", "company", "deal", "workspace"] }).notNull(),
 name: text("name").notNull(),
@@ -367,7 +360,7 @@ pk: primaryKey({ columns: [t.propertyId, t.entityId] }),
 }));
 // ── WEBHOOKS (integration inbound) ──────────────────────
 export const webhooks = sqliteTable("webhooks", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 name: text("name").notNull(),
 url: text("url").notNull(),
@@ -382,7 +375,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── INTEGRATIONS (connected apps) ──────────────────────
 export const integrations = sqliteTable("integrations", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 provider: text("provider", {
 enum: ["stripe", "payfast", "resend", "sendgrid", "calendly", "slack", "zapier", "make", "hubspot", "salesforce", "gmail", "outlook", "notion", "linear", "custom"]
@@ -397,7 +390,7 @@ updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── ANALYTICS EVENTS ────────────────────────────────────
 export const analyticsEvents = sqliteTable("analytics_events", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 event: text("event").notNull(),
 entityType: text("entity_type", { enum: ["contact", "company", "deal", "user", "workspace"] }).notNull(),
@@ -407,7 +400,7 @@ timestamp: integer("timestamp", { mode: "timestamp" }).$defaultFn(() => new Date
 });
 // ── INVITES ─────────────────────────────────────────────
 export const invites = sqliteTable("invites", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 email: text("email").notNull(),
 role: text("role", { enum: ["admin", "member", "viewer"] }).notNull().default("member"),
@@ -418,7 +411,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── NOTIFICATIONS ────────────────────────────────────────────
 export const notifications = sqliteTable("notifications", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 type: text("type", { enum: ["deal", "task", "contact", "company", "system"] }).notNull(),
@@ -429,7 +422,7 @@ createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Dat
 });
 // ── ACTIVITY LOGS (system-wide audit) ───────────────────
 export const auditLogs = sqliteTable("audit_logs", {
-id: text("id").notNull().unique().$defaultFn(createId),
+id: text("id").notNull().unique().$defaultFn(randomUUID),
 workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
 userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
 action: text("action").notNull(), // e.g. "contact.created", "deal.updated"
