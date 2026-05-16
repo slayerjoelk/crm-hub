@@ -3,14 +3,13 @@ import { db, schema } from "@/lib/db";
 import { withWorkspace } from "@/lib/middleware";
 import { eq, and } from "drizzle-orm";
 import { Resend } from "resend";
+import { randomBytes } from "crypto";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 function randomToken(): string {
-  const bytes = new Uint8Array(32);
-  for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  return randomBytes(16).toString("hex");
 }
 
 function sendInviteEmail(to: string, inviteUrl: string) {

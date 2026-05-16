@@ -80,7 +80,7 @@ async function registerHandler(req: NextRequest) {
     }).returning();
 
     let seedSteps: string[] = [];
-    try { seedSteps = await seedWorkspace(workspace.id, user.id); } catch (e) { console.error("Auto-seed failed:", e); }
+    try { seedSteps = await seedWorkspace(workspace.id, user.id); } catch {}
 
     const token = await createToken({ userId: user.id, email: user.email, workspaceId: workspace.id, role: user.role });
     await db.insert(schema.sessions).values({ userId: user.id, token, expiresAt: new Date(Date.now() + 7 * 86400000) });
@@ -91,7 +91,6 @@ async function registerHandler(req: NextRequest) {
     });
     return res;
   } catch (err: any) {
-    console.error("Register error:", err);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

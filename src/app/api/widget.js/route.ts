@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   targets.forEach(function(target) {
     var clone = widget.cloneNode(true);
     clone.innerHTML = \`
-      <form id="crmForm_\\\${Math.random().toString(36).slice(2)}">
+      <form id="crmForm_\\\${Math.random().toString(36).slice(2)}"> // Client-side only: Math.random() is fine for DOM IDs
         <h3>Stay in the loop</h3>
         <p>Get product updates and early access.</p>
         <input type="email" name="email" placeholder="you@company.com" required />

@@ -113,7 +113,6 @@ export async function GET(req: NextRequest) {
       recentActivity,
     });
   } catch (e: any) {
-    console.error("[api/owner/dashboard] error:", e);
     return NextResponse.json({ error: "Failed to load owner dashboard" }, { status: 500 });
   }
 }

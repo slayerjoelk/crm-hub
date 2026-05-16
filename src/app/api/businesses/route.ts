@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ data: businesses });
   } catch (e: any) {
-    console.error("[api/businesses] error:", e);
     return NextResponse.json({ error: "Failed to load businesses" }, { status: 500 });
   }
 }
