@@ -13,11 +13,25 @@ CRM-HUB Multi-Tenant Database Schema
 Every table has a workspaceId FK. Row-level security
 is enforced in application layer (middleware + RLS views).
 ========================================================= */
+// ── BUSINESSES ────────────────────────────────────────────
+export const businesses = sqliteTable("businesses", {
+id: text("id").notNull().unique().$defaultFn(createId),
+slug: text("slug").notNull().unique(),          // e.g. "claraccord"
+name: text("name").notNull(),                  // e.g. "ClarAccord"
+domain: text("domain"),                         // e.g. "claraccord.com"
+plan: text("plan", { enum: ["free", "starter", "pro", "enterprise"] }).notNull().default("free"),
+status: text("status", { enum: ["active", "suspended", "archived"] }).notNull().default("active"),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // ── TENANT / WORKSPACE ────────────────────────────────────
 export const workspaces = sqliteTable("workspaces", {
 id: text("id").notNull().unique().$defaultFn(createId),
 slug: text("slug").notNull().unique(),          // e.g. "mintagree"
 name: text("name").notNull(),                  // e.g. "MintAgree"
+// Multi-business support
+businessId: text("business_id").references(() => businesses.id, { onDelete: "cascade" }),
 description: text("description"),
 domain: text("domain"),                         // custom domain for this workspace
 logoUrl: text("logo_url"),

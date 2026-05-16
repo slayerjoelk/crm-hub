@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, BarChart3, CheckSquare, Activity, Settings, LogOut,
   ChevronLeft, Plus, Search, Bell, Zap, Mail, FolderOpen, Upload,
-  Menu, X, KanbanSquare, Crown, Tag, Sparkles, ChevronDown
+  Menu, X, KanbanSquare, Crown, Tag, Sparkles, ChevronDown, Building
 } from "lucide-react";
 
 const navSections = [
@@ -50,14 +50,32 @@ const navSections = [
   },
 ];
 
-export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: string; user: any; children: React.ReactNode }) {
+interface Business {
+  id: string;
+  slug: string;
+  name: string;
+  domain?: string | null;
+}
+
+function makePath(workspaceSlug: string, businessSlug: string | null, href: string) {
+  if (businessSlug) {
+    return `/${businessSlug}/${workspaceSlug}${href}`;
+  }
+  return `/${workspaceSlug}${href}`;
+}
+
+export function AppShell({ workspaceSlug, businessSlug, user, children }: { workspaceSlug: string; businessSlug?: string | null; user: any; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [bizOpen, setBizOpen] = useState(false);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+  const bizRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -73,13 +91,33 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
     return () => clearInterval(iv);
   }, []);
 
+  useEffect(() => {
+    fetch("/api/businesses", { credentials: "include" })
+      .then(r => r.json())
+      .then(j => {
+        const list = j.data ?? [];
+        setBusinesses(list);
+        if (businessSlug) {
+          const match = list.find((b: Business) => b.slug === businessSlug);
+          if (match) setCurrentBusiness(match);
+        } else if (list.length > 0) {
+          setCurrentBusiness(list[0]);
+        }
+      })
+      .catch(() => {});
+  }, [businessSlug]);
+
   async function markRead(id: string) {
     await fetch("/api/notifications", { credentials: "include", method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, read: true }) });
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }
 
   useEffect(() => {
-    function onClick(e: MouseEvent) { if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false); if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenu(false); }
+    function onClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenu(false);
+      if (bizRef.current && !bizRef.current.contains(e.target as Node)) setBizOpen(false);
+    }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
@@ -90,7 +128,10 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
     router.push("/login");
   }
 
-  const isActive = (href: string) => pathname === `/${workspaceSlug}${href}` || pathname.startsWith(`/${workspaceSlug}${href}/`);
+  const isActive = (href: string) => {
+    const base = businessSlug ? `/${businessSlug}/${workspaceSlug}` : `/${workspaceSlug}`;
+    return pathname === `${base}${href}` || pathname.startsWith(`${base}${href}/`);
+  };
 
   return (
     <div className="flex h-screen bg-[#0a0a0b] overflow-hidden" suppressHydrationWarning>
@@ -112,7 +153,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
               {collapsed && <div className="mb-2 border-t border-zinc-800/50 mx-4" />}
               <div className="space-y-0.5 px-2">
                 {section.items.map(item => (
-                  <Link key={item.label} href={`/${workspaceSlug}${item.href}`} onClick={() => setMobileMenu(false)}
+                  <Link key={item.label} href={makePath(workspaceSlug, businessSlug ?? null, item.href)} onClick={() => setMobileMenu(false)}
                     className={cn(
                       "group flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-200",
                       isActive(item.href)
@@ -170,7 +211,7 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
                 {section.items.map(item => {
                   const ItemIcon = item.icon;
                   return (
-                    <Link key={item.label} href={`/${workspaceSlug}${item.href}`} onClick={() => setMobileMenu(false)}
+                    <Link key={item.label} href={makePath(workspaceSlug, businessSlug ?? null, item.href)} onClick={() => setMobileMenu(false)}
                       className={cn("flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all", isActive(item.href) ? "bg-violet-500/10 text-violet-400" : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200")}>
                       <ItemIcon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.5} />
                       <span className="truncate">{item.label}</span>
@@ -196,10 +237,52 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
               <span>Search anything...</span>
               <kbd className="ml-2 text-[11px] font-medium text-zinc-500 bg-zinc-800/80 rounded-md px-1.5 py-0.5 border border-zinc-700/50">⌘K</kbd>
             </button>
+
+            {/* Business Switcher */}
+            <div className="relative hidden md:block" ref={bizRef}>
+              <button onClick={() => setBizOpen(v => !v)}
+                className="flex items-center gap-2 h-9 px-3 rounded-xl bg-zinc-900/60 border border-zinc-800/50 text-[13px] text-zinc-300 hover:border-zinc-700 hover:text-zinc-100 transition-all">
+                <Building className="w-4 h-4 text-zinc-500" />
+                <span className="max-w-[140px] truncate">{currentBusiness?.name ?? "Select business"}</span>
+                <ChevronDown className={cn("w-3.5 h-3.5 text-zinc-500 transition-transform", bizOpen && "rotate-180")} />
+              </button>
+              {bizOpen && (
+                <div className="absolute left-0 mt-2 w-56 rounded-xl overflow-hidden z-50 border border-zinc-800/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/50 py-1">
+                  <div className="px-3 py-2 border-b border-zinc-800/50">
+                    <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Businesses</span>
+                  </div>
+                  {businesses.map(b => (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        setBizOpen(false);
+                        if (b.slug !== currentBusiness?.slug) {
+                          // Navigate to same workspace under new business, or default to first workspace in business
+                          router.push(`/${b.slug}/${workspaceSlug}/dashboard`);
+                        }
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-[13px] flex items-center gap-2 transition-colors",
+                        b.id === currentBusiness?.id ? "bg-violet-500/10 text-violet-300" : "text-zinc-300 hover:bg-zinc-800/40"
+                      )}
+                    >
+                      <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                        {b.name[0]}
+                      </div>
+                      <span className="truncate">{b.name}</span>
+                      {b.id === currentBusiness?.id && <span className="ml-auto text-[10px] text-violet-400">●</span>}
+                    </button>
+                  ))}
+                  {businesses.length === 0 && (
+                    <div className="px-3 py-4 text-center text-[12px] text-zinc-500">No businesses yet</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href={`/${workspaceSlug}/contacts`}
+            <Link href={makePath(workspaceSlug, businessSlug ?? null, "/contacts")}
               className="hidden md:flex items-center gap-2 h-9 px-4 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white text-[13px] font-semibold hover:from-violet-400 hover:to-indigo-500 hover:shadow-lg hover:shadow-violet-500/25 transition-all">
               <Plus className="w-4 h-4" />
               Add Contact
@@ -260,8 +343,12 @@ export function AppShell({ workspaceSlug, user, children }: { workspaceSlug: str
 
               {userMenu && (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl overflow-hidden z-50 border border-zinc-800/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/50 py-1">
-                  <button onClick={() => { router.push(`/${workspaceSlug}/settings`); setUserMenu(false); }}
+                  <button onClick={() => { router.push(makePath(workspaceSlug, businessSlug ?? null, "/settings")); setUserMenu(false); }}
                     className="w-full text-left px-4 py-2.5 text-[13px] text-zinc-300 hover:bg-zinc-800/40 transition-colors">Settings</button>
+                  {user?.role === "owner" && (
+                    <button onClick={() => { router.push("/owner/dashboard"); setUserMenu(false); }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-violet-300 hover:bg-violet-500/10 transition-colors">Owner Dashboard</button>
+                  )}
                   <button onClick={() => { setUserMenu(false); logout(); }}
                     className="w-full text-left px-4 py-2.5 text-[13px] text-red-400 hover:bg-red-500/10 transition-colors">Log out</button>
                 </div>

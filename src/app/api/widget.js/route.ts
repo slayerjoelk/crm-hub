@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { db, schema, ensureTables } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
 /* ────────────────────────────────────────────
    CRM Embeddable Capture Widget

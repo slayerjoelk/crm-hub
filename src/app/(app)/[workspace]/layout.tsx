@@ -1,16 +1,26 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import { AppShell } from "@/components/crm/app-shell";
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const workspaceSlug = params?.workspace as string;
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Detect business slug from path: /:businessSlug/:workspaceSlug/...
+  const businessSlug = (() => {
+    if (!pathname || !workspaceSlug) return null;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length >= 2 && segments[1] === workspaceSlug) {
+      return segments[0];
+    }
+    return null;
+  })();
 
   useEffect(() => {
     async function check() {
@@ -37,7 +47,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <AppShell workspaceSlug={workspaceSlug ?? "default"} user={user}>
+    <AppShell workspaceSlug={workspaceSlug ?? "default"} businessSlug={businessSlug} user={user}>
       <div className="max-w-7xl mx-auto">
         {children}
       </div>
