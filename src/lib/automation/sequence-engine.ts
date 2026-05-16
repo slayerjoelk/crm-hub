@@ -1,9 +1,10 @@
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
+import { sendEmail } from "@/lib/email";
 
-export async function processSequences(workspaceId: string): Promise<{sent: number; skipped: number; completed: number; paused: number}> {
+export async function processSequences(workspaceId: string): Promise<{sent: number; skipped: number; completed: number; paused: number; failed: number}> {
   const now = Date.now();
-  const stats = { sent: 0, skipped: 0, completed: 0, paused: 0 };
+  const stats = { sent: 0, skipped: 0, completed: 0, paused: 0, failed: 0 };
   const enrollments = await db.select().from(schema.sequenceEnrollments).where(eq(schema.sequenceEnrollments.status, "active"));
 
   for (const enrollment of enrollments) {
@@ -40,14 +41,59 @@ export async function processSequences(workspaceId: string): Promise<{sent: numb
       for (let i = 0; i <= curStep; i++) requiredDelay += (sortedSteps[i]?.delayDays || 1) * 86400000 + (sortedSteps[i]?.delayHours || 0) * 3600000;
       if ((now - enrolledMs) < requiredDelay) { stats.skipped++; continue; }
 
-      await db.insert(schema.emails).values({
-        workspaceId, fromEmail: "crm@crm-hub.com", fromName: sequence.name,
-        toEmail: contact.email || "", toName: `${contact.firstName || ""} ${contact.lastName || ""}`.trim(),
-        subject: currentStep.subject, textBody: currentStep.body,
-        htmlBody: `<p>${(currentStep.body || "").replace(/\n/g, "<br>")}</p>`,
-        contactId: enrollment.contactId, sequenceStepId: currentStep.id,
-        direction: "outbound", provider: "resend", sentAt: new Date(),
+      const emailBody = (currentStep.body || "")
+        .replace(/\{\{firstName\}\}/g, contact.firstName || "there")
+        .replace(/\{\{lastName\}\}/g, contact.lastName || "");
+      const htmlBody = `<p>${emailBody.replace(/\n/g, "<br>")}</p>`;
+      const fromEmail = process.env.EMAIL_FROM || process.env.FROM_EMAIL || "CRM Hub <crm@yourdomain.com>";
+
+      // Insert email record as pending
+      const [emailRecord] = await db.insert(schema.emails).values({
+        workspaceId,
+        fromEmail,
+        fromName: sequence.name,
+        toEmail: contact.email || "",
+        toName: `${contact.firstName || ""} ${contact.lastName || ""}`.trim(),
+        subject: currentStep.subject,
+        textBody: emailBody,
+        htmlBody,
+        contactId: enrollment.contactId,
+        sequenceStepId: currentStep.id,
+        direction: "outbound",
+        provider: "resend",
+        deliveryStatus: "pending",
+      }).returning();
+
+      // Actually send the email
+      const sendResult = await sendEmail({
+        to: contact.email || "",
+        subject: currentStep.subject,
+        html: htmlBody,
+        text: emailBody,
+        contactId: enrollment.contactId,
+        workspaceId,
+        from: fromEmail,
       });
+
+      if (sendResult.success && sendResult.id) {
+        await db.update(schema.emails)
+          .set({
+            deliveryStatus: "sent",
+            providerMessageId: sendResult.id,
+            sentAt: new Date(),
+          })
+          .where(eq(schema.emails.id, emailRecord.id));
+      } else {
+        await db.update(schema.emails)
+          .set({
+            deliveryStatus: "failed",
+            error: sendResult.error || "Send failed",
+          })
+          .where(eq(schema.emails.id, emailRecord.id));
+        stats.failed++;
+        continue;
+      }
+
       await db.insert(schema.activities).values({
         workspaceId, userId: "system", type: "email", contactId: enrollment.contactId,
         subject: currentStep.subject,

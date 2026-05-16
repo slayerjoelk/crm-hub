@@ -191,7 +191,7 @@ export default function DealDetailPage() {
                   <InlineEdit label="Expected Close" value={deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toISOString().split("T")[0] : ""} type="text" onSave={v => patchField("expectedCloseDate", v)} />
                   <InlineEdit label="Priority" value={deal.priority || "medium"} onSave={v => patchField("priority", v)} />
                   <InlineEdit label="Status" value={deal.status || "open"} onSave={v => patchField("status", v)} />
-                  <InlineEdit label="Stage" value={deal.stage || ""} onSave={v => patchField("stage", v)} />
+                  <InlineEdit label="Stage" value={deal.stageId || deal.stage || ""} onSave={v => patchField("stageId", v)} />
                 </div>
               </GlassCard>
             </div>

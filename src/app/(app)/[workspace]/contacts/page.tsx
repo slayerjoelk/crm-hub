@@ -115,6 +115,15 @@ export default function ContactsPage() {
       );
     }},
     { key: "leadStatus", label: "Status", render: (c: any) => <span className="text-zinc-400 capitalize text-xs">{c.leadStatus?.replace(/_/g, " ")}</span> },
+    { key: "leadScore", label: "Score", render: (c: any) => (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+        (c.leadScore || 0) >= 61 ? "bg-red-500/10 text-red-400" :
+        (c.leadScore || 0) >= 31 ? "bg-amber-500/10 text-amber-400" :
+        "bg-zinc-800/40 text-zinc-400"
+      }`}>
+        {c.leadScore || 0}
+      </span>
+    )},
     { key: "sourceType", label: "Source", render: (c: any) => <span className="text-zinc-400 capitalize text-xs">{c.sourceType}</span> },
     { key: "lastActivityAt", label: "Last Activity", render: (c:any) => c.lastActivityAt ? <span className="text-zinc-500 text-xs">{new Date(c.lastActivityAt).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span> : <span className="text-zinc-500 text-xs">—</span> },
   ];

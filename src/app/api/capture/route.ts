@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { db, schema } from "@/lib/db";
+import { db, schema, ensureTables } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { scoreContact } from "@/lib/automation/lead-scoring";
 import { triggerWebhooks } from "@/lib/automation/webhooks";
@@ -20,6 +20,8 @@ import { enrollInSequence } from "@/lib/automation/sequence-engine";
 
 export async function POST(req: NextRequest) {
   try {
+    // Ensure tables exist on every cold start
+    await ensureTables();
     const apiKey = req.headers.get("x-api-key");
     const workspaceSlug = req.headers.get("x-workspace-slug") ||
       req.nextUrl.searchParams.get("workspace") ||

@@ -260,6 +260,9 @@ sentAt: integer("sent_at", { mode: "timestamp" }),
 openedAt: integer("opened_at", { mode: "timestamp" }),
 clickedAt: integer("clicked_at", { mode: "timestamp" }),
 bouncedAt: integer("bounced_at", { mode: "timestamp" }),
+// Delivery status
+deliveryStatus: text("delivery_status", { enum: ["pending", "sent", "delivered", "bounced", "failed"] }).default("pending"),
+error: text("error"),
 // Association
 contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
 dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
