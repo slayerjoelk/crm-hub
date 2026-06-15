@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { verifyPassword, createToken } from "@/lib/auth";
+import { verifyPassword, signToken } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 import { withRateLimit } from "@/lib/rate-limit";
 
@@ -43,7 +43,7 @@ async function loginHandler(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    const token = await createToken({
+    const token = await signToken({
       userId: user.id,
       email: user.email,
       workspaceId: user.workspaceId,

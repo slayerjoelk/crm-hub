@@ -3,14 +3,14 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "./lib/auth";
 
 /* =========================================================
-   Multi-tenant Middleware
+   Multi-tenant Middleware with Security Hardening
    - Resolves workspace from subdomain OR /:workspaceSlug/*
    - Resolves business from subdomain OR /:businessSlug/:workspaceSlug/*
    - Rewrites /:businessSlug/:workspaceSlug/... → /:workspaceSlug/...
-     so existing app routes work without duplication.
    - Public routes: /, /login, /register, /api/auth
    - Authenticated routes: /:workspaceSlug/*
    - Sets x-workspace-id, x-business-id headers
+   - Adds security headers to all responses
 ========================================================= */
 
 const PUBLIC_PREFIXES = [
@@ -38,15 +38,44 @@ function isPublicRoute(pathname: string): boolean {
   return false;
 }
 
+// ── SECURITY HEADERS ──────────────────────────────────────
+const CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
+const SECURITY_HEADERS = {
+  "Content-Security-Policy": CSP_DIRECTIVES,
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Pragma": "no-cache",
+  "Expires": "0",
+};
+
 export async function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
   // Skip public routes + static assets
   if (isPublicRoute(pathname)) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // Add security headers to public routes too
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
-  // ── Host / Subdomain Resolution ──
+  // ── Host / Subdomain Resolution ─────────────────────────
   const host = req.headers.get("host") ?? "";
   const rootDomain = process.env.ROOT_DOMAIN ?? "localhost:3000";
   const hostParts = host.replace(/:\d+$/, "").split(".");
@@ -57,7 +86,7 @@ export async function middleware(req: NextRequest) {
     subdomainSlug = hostParts[0];
   }
 
-  // ── Path Resolution ──
+  // ── Path Resolution ─────────────────────────────────────
   let businessSlug: string | null = null;
   let workspaceSlug: string | null = null;
   const segments = pathname.split("/").filter(Boolean);
@@ -87,7 +116,7 @@ export async function middleware(req: NextRequest) {
     businessSlug = subdomainSlug;
   }
 
-  // ── Auth Check ──
+  // ── Auth Check ──────────────────────────────────────────
   const token = req.cookies.get("session")?.value ?? null;
   let user: { userId: string; workspaceId: string; role: string } | null = null;
   if (token) {
@@ -115,16 +144,24 @@ export async function middleware(req: NextRequest) {
     headers.set("x-user-role", user.role);
   }
 
-  // ── Rewrite for multi-business URLs ──
+  // ── Rewrite for multi-business URLs ────────────────────
   // /claraccord/mintagree/dashboard  →  /mintagree/dashboard
   if (businessSlug && workspaceSlug) {
     const rewrittenPath = pathname.replace(`/${businessSlug}/${workspaceSlug}`, `/${workspaceSlug}`);
     const url = req.nextUrl.clone();
     url.pathname = rewrittenPath;
-    return NextResponse.rewrite(url, { request: { headers } });
+    const response = NextResponse.rewrite(url, { request: { headers } });
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
-  return NextResponse.next({ request: { headers } });
+  const response = NextResponse.next({ request: { headers } });
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export const config = {

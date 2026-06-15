@@ -47,7 +47,9 @@ export async function ensureTables() {
       CREATE TABLE IF NOT EXISTS custom_properties (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, entity_type text NOT NULL, name text NOT NULL, label text NOT NULL, type text NOT NULL, options text, is_required integer DEFAULT 0, display_order integer DEFAULT 0, created_at integer);
       CREATE TABLE IF NOT EXISTS custom_property_values (property_id text NOT NULL REFERENCES custom_properties(id) ON DELETE CASCADE, entity_id text NOT NULL, value text NOT NULL, created_at integer, updated_at integer, PRIMARY KEY(property_id, entity_id));
     `);
-    console.log("[DB] Tables ensured");
+    if (process.env.NODE_ENV === "development") {
+      console.log("[DB] Tables ensured");
+    }
   } catch (e) { console.error("[DB] Table creation failed:", e); }
 }
 

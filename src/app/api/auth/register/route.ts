@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { hashPassword, createToken } from "@/lib/auth";
+import { hashPassword, signToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { withRateLimit } from "@/lib/rate-limit";
 
@@ -82,7 +82,7 @@ async function registerHandler(req: NextRequest) {
     let seedSteps: string[] = [];
     try { seedSteps = await seedWorkspace(workspace.id, user.id); } catch {}
 
-    const token = await createToken({ userId: user.id, email: user.email, workspaceId: workspace.id, role: user.role });
+    const token = await signToken({ userId: user.id, email: user.email, workspaceId: workspace.id, role: user.role });
     await db.insert(schema.sessions).values({ userId: user.id, token, expiresAt: new Date(Date.now() + 7 * 86400000) });
 
     const res = NextResponse.json({ user, workspace, seed: seedSteps });

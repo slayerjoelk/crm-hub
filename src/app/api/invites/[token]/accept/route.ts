@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and, gt } from "drizzle-orm";
-import { hashPassword, createToken } from "@/lib/auth";
+import { hashPassword, signToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const token = (await params).token;
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   await db.delete(schema.invites).where(eq(schema.invites.id, invite.id));
 
-  const jwt = await createToken({
+  const jwt = await signToken({
     userId: user.id,
     email: user.email,
     workspaceId: user.workspaceId,
