@@ -11,7 +11,12 @@ import { verifyToken } from "./lib/auth";
    - Authenticated routes: /:workspaceSlug/*
    - Sets x-workspace-id, x-business-id headers
    - Adds security headers to all responses
+   - AUTH DISABLED: Set REQUIRE_AUTH=true to re-enable
 ========================================================= */
+
+// ── AUTH DISABLED FOR DEVELOPMENT ─────────────────────────
+// Set to "true" in .env to re-enable authentication
+const REQUIRE_AUTH = process.env.REQUIRE_AUTH === "true";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -117,17 +122,29 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── Auth Check ──────────────────────────────────────────
-  const token = req.cookies.get("session")?.value ?? null;
   let user: { userId: string; workspaceId: string; role: string } | null = null;
-  if (token) {
-    user = await verifyToken(token);
-  }
-
-  // If unauthenticated but on workspace route → redirect to login
-  if (!user && workspaceSlug) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  
+  if (REQUIRE_AUTH) {
+    const token = req.cookies.get("session")?.value ?? null;
+    if (token) {
+      user = await verifyToken(token);
+    }
+    
+    // If unauthenticated but on workspace route → redirect to login
+    if (!user && workspaceSlug) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  } else {
+    // Auth disabled — create a dummy user for development
+    if (workspaceSlug) {
+      user = {
+        userId: "dev-user",
+        workspaceId: "dev-workspace",
+        role: "admin",
+      };
+    }
   }
 
   // Attach workspace + user + business to request headers for downstream use
