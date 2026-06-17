@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, BarChart3, CheckSquare, Activity, Settings, LogOut,
   ChevronLeft, Plus, Search, Bell, Zap, Mail, FolderOpen, Upload,
-  Menu, X, KanbanSquare, Crown, Tag, Sparkles, ChevronDown, Building
+  Menu, X, KanbanSquare, Crown, Tag, Sparkles, ChevronDown, Building, Workflow, FileText, Layers, UserPlus, Radar,
+  LifeBuoy, Megaphone, FileSpreadsheet, Gauge, PieChart
 } from "lucide-react";
 
 const navSections = [
@@ -16,9 +17,11 @@ const navSections = [
     label: "CRM",
     items: [
       { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      { label: "Leads", icon: UserPlus, href: "/leads" },
       { label: "Contacts", icon: Users, href: "/contacts" },
       { label: "Companies", icon: Building2, href: "/companies" },
       { label: "Deals", icon: BarChart3, href: "/deals" },
+      { label: "Quotes", icon: FileSpreadsheet, href: "/quotes" },
       { label: "Pipelines", icon: KanbanSquare, href: "/pipelines" },
       { label: "Tasks", icon: CheckSquare, href: "/tasks" },
     ],
@@ -26,18 +29,25 @@ const navSections = [
   {
     label: "Engagement",
     items: [
+      { label: "Prospecting", icon: Radar, href: "/prospecting" },
+      { label: "Campaigns", icon: Megaphone, href: "/campaigns" },
+      { label: "Cases", icon: LifeBuoy, href: "/cases" },
       { label: "Activities", icon: Activity, href: "/activities" },
       { label: "Emails", icon: Mail, href: "/emails" },
+      { label: "Templates", icon: FileText, href: "/templates" },
       { label: "Sequences", icon: FolderOpen, href: "/sequences" },
+      { label: "Workflows", icon: Workflow, href: "/workflows" },
       { label: "Automation", icon: Zap, href: "/automation" },
     ],
   },
   {
     label: "Data",
     items: [
+      { label: "Reports", icon: BarChart3, href: "/reports" },
+      { label: "Forecast", icon: Gauge, href: "/forecast" },
       { label: "Tags", icon: Tag, href: "/tags" },
       { label: "Import", icon: Upload, href: "/import" },
-      { label: "Analytics", icon: BarChart3, href: "/analytics" },
+      { label: "Analytics", icon: PieChart, href: "/analytics" },
     ],
   },
   {
@@ -276,6 +286,13 @@ export function AppShell({ workspaceSlug, businessSlug, user, children }: { work
                   {businesses.length === 0 && (
                     <div className="px-3 py-4 text-center text-[12px] text-zinc-500">No businesses yet</div>
                   )}
+                  <div className="mt-1 pt-1 border-t border-zinc-800/50">
+                    <Link href="/portfolio" onClick={() => setBizOpen(false)}
+                      className="w-full text-left px-3 py-2 text-[13px] flex items-center gap-2 text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200 transition-colors">
+                      <Layers className="w-4 h-4 text-zinc-500" />
+                      <span>View all companies</span>
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

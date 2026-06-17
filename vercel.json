@@ -17,6 +17,7 @@
     }
   ],
   "crons": [
-    { "path": "/api/health", "schedule": "0 0 * * *" }
+    { "path": "/api/health", "schedule": "0 0 * * *" },
+    { "path": "/api/automation/cron", "schedule": "0 9 * * *" }
   ]
 }

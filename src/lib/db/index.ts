@@ -20,7 +20,8 @@ export const db = drizzle(client, { schema });
 // Auto-create tables on every cold start (both local and production)
 export async function ensureTables() {
   try {
-    await client.execute(`
+    // executeMultiple runs ALL statements in the script (execute() only runs the first)
+    await client.executeMultiple(`
       CREATE TABLE IF NOT EXISTS businesses (id text PRIMARY KEY, slug text UNIQUE NOT NULL, name text NOT NULL, domain text, plan text NOT NULL DEFAULT 'free', status text NOT NULL DEFAULT 'active', created_at integer, updated_at integer);
       CREATE TABLE IF NOT EXISTS workspaces (id text PRIMARY KEY, slug text UNIQUE NOT NULL, name text NOT NULL, business_id text REFERENCES businesses(id) ON DELETE CASCADE, description text, domain text, logo_url text, primary_color text DEFAULT '#2563eb', accent_color text DEFAULT '#0d9488', plan text NOT NULL DEFAULT 'free', status text NOT NULL DEFAULT 'active', stripe_customer_id text, stripe_subscription_id text, billing_email text, created_at integer, updated_at integer);
       CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, email text NOT NULL, name text, avatar_url text, role text NOT NULL DEFAULT 'member', status text NOT NULL DEFAULT 'invited', timezone text DEFAULT 'UTC', last_seen_at integer, password_hash text, created_at integer, updated_at integer, UNIQUE(workspace_id, email));
@@ -46,7 +47,43 @@ export async function ensureTables() {
       CREATE TABLE IF NOT EXISTS audit_logs (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, user_id text REFERENCES users(id) ON DELETE SET NULL, action text NOT NULL, entity_type text NOT NULL, entity_id text NOT NULL, metadata text, ip_address text, user_agent text, created_at integer);
       CREATE TABLE IF NOT EXISTS custom_properties (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, entity_type text NOT NULL, name text NOT NULL, label text NOT NULL, type text NOT NULL, options text, is_required integer DEFAULT 0, display_order integer DEFAULT 0, created_at integer);
       CREATE TABLE IF NOT EXISTS custom_property_values (property_id text NOT NULL REFERENCES custom_properties(id) ON DELETE CASCADE, entity_id text NOT NULL, value text NOT NULL, created_at integer, updated_at integer, PRIMARY KEY(property_id, entity_id));
+      CREATE TABLE IF NOT EXISTS workflows (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, description text, status text NOT NULL DEFAULT 'draft', trigger_type text NOT NULL, trigger_config text, conditions text DEFAULT '[]', actions text NOT NULL DEFAULT '[]', allow_reenrollment integer DEFAULT 0, enrolled_count integer DEFAULT 0, completed_count integer DEFAULT 0, last_run_at integer, created_by text, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS workflow_executions (id text PRIMARY KEY, workflow_id text NOT NULL REFERENCES workflows(id) ON DELETE CASCADE, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, entity_type text NOT NULL, entity_id text NOT NULL, status text NOT NULL, actions_run text, error text, created_at integer);
+      CREATE TABLE IF NOT EXISTS email_templates (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, subject text NOT NULL, body text NOT NULL, category text DEFAULT 'custom', use_count integer DEFAULT 0, created_by text, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS leads (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, owner_id text, first_name text, last_name text, email text, phone text, job_title text, company text, website text, industry text, employee_count integer, annual_revenue real, status text NOT NULL DEFAULT 'new', rating text DEFAULT 'cold', lead_score integer DEFAULT 0, source text DEFAULT 'other', source_detail text, city text, state text, country text, linkedin_url text, notes text, is_converted integer DEFAULT 0, converted_at integer, converted_contact_id text, converted_company_id text, converted_deal_id text, last_activity_at integer, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS prospects (id text PRIMARY KEY, first_name text NOT NULL, last_name text NOT NULL, title text, seniority text DEFAULT 'other', email text, company_name text NOT NULL, domain text, industry text, employee_count integer, annual_revenue real, country text, city text, linkedin_url text, technologies text, created_at integer);
+      CREATE TABLE IF NOT EXISTS cases (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, case_number integer NOT NULL, subject text NOT NULL, description text, status text NOT NULL DEFAULT 'new', priority text NOT NULL DEFAULT 'medium', type text DEFAULT 'question', origin text DEFAULT 'web', contact_id text, company_id text, owner_id text, resolved_at integer, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS campaigns (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, type text DEFAULT 'email', status text NOT NULL DEFAULT 'planned', description text, start_date integer, end_date integer, budgeted_cost real DEFAULT 0, actual_cost real DEFAULT 0, expected_revenue real DEFAULT 0, owner_id text, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS campaign_members (id text PRIMARY KEY, campaign_id text NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE, contact_id text, lead_id text, status text DEFAULT 'targeted', responded_at integer, created_at integer);
+      CREATE TABLE IF NOT EXISTS products (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, sku text, description text, unit_price real DEFAULT 0, currency text DEFAULT 'USD', category text, billing_period text DEFAULT 'one_time', is_active integer DEFAULT 1, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS quotes (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, quote_number integer NOT NULL, name text NOT NULL, deal_id text, contact_id text, company_id text, status text NOT NULL DEFAULT 'draft', currency text DEFAULT 'USD', subtotal real DEFAULT 0, discount_percent real DEFAULT 0, tax_percent real DEFAULT 0, total real DEFAULT 0, valid_until integer, notes text, created_at integer, updated_at integer);
+      CREATE TABLE IF NOT EXISTS quote_line_items (id text PRIMARY KEY, quote_id text NOT NULL REFERENCES quotes(id) ON DELETE CASCADE, product_id text, name text NOT NULL, quantity real DEFAULT 1, unit_price real DEFAULT 0, discount_percent real DEFAULT 0, line_total real DEFAULT 0, display_order integer DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS reports (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, description text, config text NOT NULL, created_by text, created_at integer, updated_at integer);
     `);
+
+    // Self-heal: add columns that pre-date the current schema.
+    // CREATE TABLE IF NOT EXISTS won't alter an existing table, so older
+    // deployments (incl. the prod Turso DB) can be missing newer columns.
+    const columnMigrations: Array<[string, string, string]> = [
+      ["emails", "delivery_status", "text DEFAULT 'pending'"],
+      ["emails", "error", "text"],
+      ["companies", "parent_company_id", "text"],
+    ];
+    for (const [table, column, def] of columnMigrations) {
+      try {
+        const info = await client.execute(`PRAGMA table_info(${table})`);
+        const exists = info.rows.some((r: any) => r.name === column);
+        if (!exists) {
+          await client.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+          if (process.env.NODE_ENV === "development") {
+            console.log(`[DB] Added missing column ${table}.${column}`);
+          }
+        }
+      } catch {
+        // column already present or table missing — safe to ignore
+      }
+    }
+
     if (process.env.NODE_ENV === "development") {
       console.log("[DB] Tables ensured");
     }

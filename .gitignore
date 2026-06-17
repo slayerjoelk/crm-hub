@@ -43,3 +43,10 @@ local.db
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*.local
+
+# Vercel env dumps (contain OIDC tokens / secrets) — never commit
+/production
+/development
+/preview
+.vercel

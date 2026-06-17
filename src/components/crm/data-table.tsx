@@ -236,11 +236,11 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Table - no card wrapper */}
-      <div className="overflow-x-auto">
+      {/* Table in an elevated card for depth */}
+      <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-gradient-to-b from-[#141517] to-[#0f1011]">
         <table className="w-full text-left">
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <tr className="bg-white/[0.02]" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               {bulkActions && (
                 <th className="px-3 py-2.5 w-8">
                   <input
@@ -337,7 +337,7 @@ export function DataTable<T extends Record<string, any>>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className="px-4 py-2.5 whitespace-nowrap text-[13px] font-normal"
+                      className="px-4 py-3 whitespace-nowrap text-[13px] font-normal tabular-nums"
                       style={{
                         color: isNameColumn(col) ? "#f7f8f8" : "#d0d6e0",
                         fontWeight: isNameColumn(col) ? 510 : 400,

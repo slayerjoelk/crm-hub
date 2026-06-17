@@ -4,6 +4,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { scoreContact } from "@/lib/automation/lead-scoring";
 import { triggerWebhooks } from "@/lib/automation/webhooks";
 import { enrollInSequence } from "@/lib/automation/sequence-engine";
+import { runWorkflows } from "@/lib/automation/workflow-engine";
 
 /* ────────────────────────────────────────────
    Lead Capture → Full Pipeline
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
       firstName = "",
       lastName = "",
       phone = "",
+      jobTitle = "",
       sourceType = "other",
       sourceDetail = "API capture",
       company: companyName = "",
@@ -118,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     // Create contact
     const [contact] = await db.insert(schema.contacts)
-      .values({ workspaceId, firstName, lastName, email: email.toLowerCase().trim(), phone: phone || undefined, sourceType, sourceDetail, lifecycleStage: "subscriber", leadStatus: "new", companyId, lastActivityAt: new Date() })
+      .values({ workspaceId, firstName, lastName, email: email.toLowerCase().trim(), phone: phone || undefined, jobTitle: jobTitle || undefined, sourceType, sourceDetail, lifecycleStage: "subscriber", leadStatus: "new", companyId, lastActivityAt: new Date() })
       .returning();
 
     // Log activity
@@ -165,6 +167,13 @@ export async function POST(req: NextRequest) {
 
     // Notify workspace
     try { if (userId) await db.insert(schema.notifications).values({ workspaceId, userId, type: "contact", title: "New lead captured", body: `${firstName} ${lastName} (${email}) from ${sourceDetail}` }); } catch {}
+
+    // Run automation workflows (contact_created + score threshold)
+    try {
+      const enriched = { ...contact, leadScore: contactScore, company: companyName };
+      await runWorkflows(workspaceId, "contact_created", "contact", enriched, { score: contactScore });
+      await runWorkflows(workspaceId, "lead_score_threshold", "contact", enriched, { score: contactScore });
+    } catch {}
 
     return NextResponse.json({ success: true, data: { ...contact, leadScore: contactScore, enrolled: enrollment?.enrolled || false } }, { status: 201 });
   } catch (e: any) {

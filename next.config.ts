@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // Pin the workspace root so Turbopack ignores the stray ~/package-lock.json
+  turbopack: {
+    root: import.meta.dirname,
+  },
   images: {
     remotePatterns: [],
   },

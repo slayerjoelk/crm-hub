@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { isAuthDisabled } from "@/lib/auth-config";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
@@ -12,6 +13,33 @@ export interface WorkspaceContext {
 export interface BusinessContext extends WorkspaceContext {
   businessId: string | null;
   businessSlug: string | null;
+}
+
+// When auth is disabled for development, API routes (called at /api/* with no
+// workspace in the path) still need a workspace. Resolve a stable dev context
+// — first active workspace + any user in it — so the app works end-to-end
+// without a session. Fail-secure: never active in production (see auth-config).
+const DEV_AUTH_DISABLED = isAuthDisabled();
+
+async function devFallbackContext(slug?: string | null): Promise<{ workspaceId: string; userId: string; role: string } | null> {
+  if (!DEV_AUTH_DISABLED) return null;
+  try {
+    // Prefer the workspace the request is scoped to (from x-workspace-slug,
+    // derived from the page URL) so each company sees ITS OWN data.
+    let ws: any = null;
+    if (slug) {
+      [ws] = await db.select().from(schema.workspaces).where(eq(schema.workspaces.slug, slug));
+    }
+    if (!ws) {
+      const active = await db.select().from(schema.workspaces).where(eq(schema.workspaces.status, "active"));
+      ws = active[0] ?? (await db.select().from(schema.workspaces))[0];
+    }
+    if (!ws) return null;
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.workspaceId, ws.id));
+    return { workspaceId: ws.id, userId: user?.id || "dev-user", role: "admin" };
+  } catch {
+    return null;
+  }
 }
 
 export async function withWorkspace(
@@ -33,6 +61,13 @@ export async function withWorkspace(
         role = payload.role;
       }
     }
+  }
+
+  // Dev fallback (auth disabled) so /api/* works without a session, scoped to
+  // the workspace the page is for (x-workspace-slug from the Referer).
+  if (!workspaceId || !userId) {
+    const dev = await devFallbackContext(req.headers.get("x-workspace-slug"));
+    if (dev) { workspaceId = dev.workspaceId; userId = dev.userId; role = dev.role; }
   }
 
   if (!workspaceId || !userId) {
@@ -63,6 +98,12 @@ export async function withBusiness(
         role = payload.role;
       }
     }
+  }
+
+  // Dev fallback (auth disabled), scoped to the page's workspace
+  if (!workspaceId || !userId) {
+    const dev = await devFallbackContext(req.headers.get("x-workspace-slug"));
+    if (dev) { workspaceId = dev.workspaceId; userId = dev.userId; role = dev.role; }
   }
 
   if (!workspaceId || !userId) {

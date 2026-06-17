@@ -121,6 +121,8 @@ name: text("name").notNull(),
 domain: text("domain"), // e.g. "stripe.com"
 description: text("description"),
 industry: text("industry"),
+// Account hierarchy (Salesforce-style parent/child accounts)
+parentCompanyId: text("parent_company_id"),
 type: text("type", { enum: ["prospect", "partner", "reseller", "vendor", "other"] }).default("prospect"),
 size: text("size", { enum: ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"] }),
 // Lifecycle
@@ -432,4 +434,213 @@ metadata: text("metadata"), // JSON: before/after values
 ipAddress: text("ip_address"),
 userAgent: text("user_agent"),
 createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── WORKFLOWS (visual automation: trigger → conditions → actions) ──
+export const workflows = sqliteTable("workflows", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+name: text("name").notNull(),
+description: text("description"),
+status: text("status", { enum: ["draft", "active", "paused", "archived"] }).notNull().default("draft"),
+// What fires the workflow
+triggerType: text("trigger_type", {
+enum: ["contact_created", "contact_updated", "deal_created", "deal_stage_changed", "deal_won", "deal_lost", "lead_score_threshold", "tag_added", "email_opened", "email_clicked", "email_bounced", "contact_replied", "task_overdue", "scheduled"]
+}).notNull(),
+triggerConfig: text("trigger_config"), // JSON: e.g. { scoreThreshold: 70, stageId: "...", tagName: "..." }
+// AND-matched conditions: [{ field, op, value }]
+conditions: text("conditions").default("[]"), // JSON array
+// Ordered actions: [{ type, config }]
+actions: text("actions").notNull().default("[]"), // JSON array
+// Re-entry control
+allowReenrollment: integer("allow_reenrollment", { mode: "boolean" }).default(false),
+// Stats
+enrolledCount: integer("enrolled_count").default(0),
+completedCount: integer("completed_count").default(0),
+lastRunAt: integer("last_run_at", { mode: "timestamp" }),
+createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── WORKFLOW EXECUTIONS (audit log of each run) ─────────
+export const workflowExecutions = sqliteTable("workflow_executions", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workflowId: text("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+entityType: text("entity_type").notNull(), // contact | deal
+entityId: text("entity_id").notNull(),
+status: text("status", { enum: ["success", "partial", "failed", "skipped"] }).notNull(),
+actionsRun: text("actions_run"), // JSON: results per action
+error: text("error"),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── EMAIL TEMPLATES (reusable for sequences + one-off sends) ──
+export const emailTemplates = sqliteTable("email_templates", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+name: text("name").notNull(),
+subject: text("subject").notNull(),
+body: text("body").notNull(), // supports {{firstName}} {{lastName}} {{company}} merge tags
+category: text("category", { enum: ["cold_outreach", "follow_up", "nurture", "onboarding", "newsletter", "transactional", "custom"] }).default("custom"),
+useCount: integer("use_count").default(0),
+createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── REPORTS (saved report configs) ──────────────────────
+export const reports = sqliteTable("reports", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+name: text("name").notNull(),
+description: text("description"),
+config: text("config").notNull(), // JSON: { object, metric, measure, groupBy, chart }
+createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── CASES (support tickets) ─────────────────────────────
+export const cases = sqliteTable("cases", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+caseNumber: integer("case_number").notNull(),
+subject: text("subject").notNull(),
+description: text("description"),
+status: text("status", { enum: ["new", "open", "in_progress", "escalated", "waiting", "closed"] }).notNull().default("new"),
+priority: text("priority", { enum: ["low", "medium", "high", "urgent"] }).notNull().default("medium"),
+type: text("type", { enum: ["question", "problem", "feature_request", "billing", "other"] }).default("question"),
+origin: text("origin", { enum: ["email", "phone", "web", "chat", "other"] }).default("web"),
+contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+companyId: text("company_id").references(() => companies.id, { onDelete: "set null" }),
+ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
+resolvedAt: integer("resolved_at", { mode: "timestamp" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── CAMPAIGNS (marketing, with members + ROI) ───────────
+export const campaigns = sqliteTable("campaigns", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+name: text("name").notNull(),
+type: text("type", { enum: ["email", "event", "webinar", "paid_ads", "content", "social", "referral", "other"] }).default("email"),
+status: text("status", { enum: ["planned", "active", "completed", "aborted"] }).notNull().default("planned"),
+description: text("description"),
+startDate: integer("start_date", { mode: "timestamp" }),
+endDate: integer("end_date", { mode: "timestamp" }),
+budgetedCost: real("budgeted_cost").default(0),
+actualCost: real("actual_cost").default(0),
+expectedRevenue: real("expected_revenue").default(0),
+ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+export const campaignMembers = sqliteTable("campaign_members", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+campaignId: text("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+contactId: text("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+leadId: text("lead_id"),
+status: text("status", { enum: ["targeted", "sent", "opened", "responded", "registered", "attended", "converted"] }).default("targeted"),
+respondedAt: integer("responded_at", { mode: "timestamp" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── PRODUCTS + QUOTES (CPQ-lite) ────────────────────────
+export const products = sqliteTable("products", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+name: text("name").notNull(),
+sku: text("sku"),
+description: text("description"),
+unitPrice: real("unit_price").default(0),
+currency: text("currency").default("USD"),
+category: text("category"),
+billingPeriod: text("billing_period", { enum: ["one_time", "monthly", "annually"] }).default("one_time"),
+isActive: integer("is_active", { mode: "boolean" }).default(true),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+export const quotes = sqliteTable("quotes", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+quoteNumber: integer("quote_number").notNull(),
+name: text("name").notNull(),
+dealId: text("deal_id").references(() => deals.id, { onDelete: "set null" }),
+contactId: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+companyId: text("company_id").references(() => companies.id, { onDelete: "set null" }),
+status: text("status", { enum: ["draft", "sent", "accepted", "declined", "expired"] }).notNull().default("draft"),
+currency: text("currency").default("USD"),
+subtotal: real("subtotal").default(0),
+discountPercent: real("discount_percent").default(0),
+taxPercent: real("tax_percent").default(0),
+total: real("total").default(0),
+validUntil: integer("valid_until", { mode: "timestamp" }),
+notes: text("notes"),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+export const quoteLineItems = sqliteTable("quote_line_items", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+quoteId: text("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+productId: text("product_id"),
+name: text("name").notNull(),
+quantity: real("quantity").default(1),
+unitPrice: real("unit_price").default(0),
+discountPercent: real("discount_percent").default(0),
+lineTotal: real("line_total").default(0),
+displayOrder: integer("display_order").default(0),
+});
+// ── PROSPECTS (B2B database — global, Apollo-style search pool) ──
+export const prospects = sqliteTable("prospects", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+firstName: text("first_name").notNull(),
+lastName: text("last_name").notNull(),
+title: text("title"),
+seniority: text("seniority", { enum: ["founder", "owner", "c_suite", "vp", "director", "manager", "senior", "entry", "other"] }).default("other"),
+email: text("email"),
+companyName: text("company_name").notNull(),
+domain: text("domain"),
+industry: text("industry"),
+employeeCount: integer("employee_count"),
+annualRevenue: real("annual_revenue"),
+country: text("country"),
+city: text("city"),
+linkedinUrl: text("linkedin_url"),
+technologies: text("technologies"), // JSON array
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+// ── LEADS (Salesforce-style: unqualified prospect, pre-account) ──
+export const leads = sqliteTable("leads", {
+id: text("id").notNull().unique().$defaultFn(randomUUID),
+workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
+// Person
+firstName: text("first_name"),
+lastName: text("last_name"),
+email: text("email"),
+phone: text("phone"),
+jobTitle: text("job_title"),
+// Raw company info (a lead isn't linked to an account yet — it's free text)
+company: text("company"),
+website: text("website"),
+industry: text("industry"),
+employeeCount: integer("employee_count"),
+annualRevenue: real("annual_revenue"),
+// Qualification
+status: text("status", { enum: ["new", "working", "nurturing", "qualified", "unqualified", "converted"] }).notNull().default("new"),
+rating: text("rating", { enum: ["hot", "warm", "cold"] }).default("cold"),
+leadScore: integer("lead_score").default(0),
+source: text("source", { enum: ["organic","paid","referral","social","email","event","partner","outbound","list_import","prospecting","other"] }).default("other"),
+sourceDetail: text("source_detail"),
+// Address
+city: text("city"),
+state: text("state"),
+country: text("country"),
+linkedinUrl: text("linkedin_url"),
+notes: text("notes"),
+// Conversion tracking
+isConverted: integer("is_converted", { mode: "boolean" }).default(false),
+convertedAt: integer("converted_at", { mode: "timestamp" }),
+convertedContactId: text("converted_contact_id"),
+convertedCompanyId: text("converted_company_id"),
+convertedDealId: text("converted_deal_id"),
+lastActivityAt: integer("last_activity_at", { mode: "timestamp" }),
+createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

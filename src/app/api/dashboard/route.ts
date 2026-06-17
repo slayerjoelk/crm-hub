@@ -50,8 +50,14 @@ export async function GET(req: NextRequest) {
       sumBetween(startOfLastMonth, startOfMonth),
     ]);
 
-    const pct = (thisVal: number, lastVal: number) =>
-      lastVal === 0 ? (thisVal > 0 ? 100 : 0) : Math.round(((thisVal - lastVal) / lastVal) * 100);
+    // Month-over-month change in NEW records. Returns null when there's no
+    // current-month activity — a total with zero new this month shouldn't read
+    // as "-100%". The UI hides the chip on null.
+    const pct = (thisVal: number, lastVal: number): number | null => {
+      if (thisVal === 0) return null;
+      if (lastVal === 0) return 100;
+      return Math.round(((thisVal - lastVal) / lastVal) * 100);
+    };
 
     const trends = {
       contacts: pct(Number(contactsThisMonth.value ?? 0), Number(contactsLastMonth.value ?? 0)),

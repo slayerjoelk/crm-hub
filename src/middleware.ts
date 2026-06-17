@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "./lib/auth";
+import { isAuthRequired } from "./lib/auth-config";
 
 /* =========================================================
    Multi-tenant Middleware with Security Hardening
@@ -14,24 +15,38 @@ import { verifyToken } from "./lib/auth";
    - AUTH DISABLED: Set REQUIRE_AUTH=true to re-enable
 ========================================================= */
 
-// ── AUTH DISABLED FOR DEVELOPMENT ─────────────────────────
-// Set to "true" in .env to re-enable authentication
-const REQUIRE_AUTH = process.env.REQUIRE_AUTH === "true";
+// ── AUTH (fail-secure) ────────────────────────────────────
+// Always enforced in production; bypassed only for local dev. See lib/auth-config.
+const REQUIRE_AUTH = isAuthRequired();
+
+// First-path segments that are NOT workspaces (reserved app routes)
+const RESERVED = new Set(["api", "login", "register", "pricing", "owner", "portfolio", "invite", "demo-marketing"]);
+
+// Known in-app page names — used to tell /:workspace/:page apart from /:business/:workspace
+const PAGE_SEGMENTS = new Set([
+  "dashboard", "leads", "contacts", "companies", "deals", "quotes", "pipelines", "tasks",
+  "prospecting", "campaigns", "cases", "activities", "emails", "templates", "sequences",
+  "workflows", "automation", "reports", "forecast", "tags", "import", "analytics", "search", "settings",
+]);
 
 const PUBLIC_PREFIXES = [
   "/login",
   "/register",
-  "/demo",
   "/pricing",
   "/api/auth",
   "/api/capture",
   "/api/automation/cron",
+  "/api/track",
+  "/api/webhooks",
   "/api/widget.js",
   "/_next",
   "/favicon.ico",
   "/logo",
   "/static",
   "/owner",
+  "/portfolio",
+  "/api/portfolio",
+  "/api/businesses",
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -92,28 +107,34 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── Path Resolution ─────────────────────────────────────
+  // URL shapes: /:workspace/:page  OR  /:business/:workspace/:page
+  // We disambiguate by whether segment[1] is a known app page name.
   let businessSlug: string | null = null;
   let workspaceSlug: string | null = null;
   const segments = pathname.split("/").filter(Boolean);
 
-  if (segments.length >= 2) {
-    const first = segments[0];
-    const second = segments[1];
-    if (["api","login","register","demo","pricing","owner"].includes(first)) {
-      // public/api segment — nothing to resolve
-    } else if (["api","login","register","demo","pricing","owner"].includes(second)) {
-      // /:workspaceSlug/dashboard etc (second is a page)
-      workspaceSlug = first;
-    } else {
-      // /:businessSlug/:workspaceSlug/*
-      businessSlug = first;
-      workspaceSlug = second;
-    }
-  } else if (segments.length === 1) {
-    const first = segments[0];
-    if (!["api","login","register","demo","pricing","owner"].includes(first)) {
-      workspaceSlug = first;
-    }
+  // Resolve workspace/business from a list of path segments
+  function resolveFrom(segs: string[]): { ws: string | null; biz: string | null } {
+    if (segs.length === 0) return { ws: null, biz: null };
+    if (RESERVED.has(segs[0])) return { ws: null, biz: null };
+    if (segs.length === 1) return { ws: segs[0], biz: null };
+    // /:workspace/:page  (segment[1] is a page) vs /:business/:workspace/...
+    if (PAGE_SEGMENTS.has(segs[1])) return { ws: segs[0], biz: null };
+    return { ws: segs[1], biz: segs[0] };
+  }
+
+  if (!pathname.startsWith("/api/")) {
+    const r = resolveFrom(segments);
+    workspaceSlug = r.ws; businessSlug = r.biz;
+  } else {
+    // /api/* — workspace isn't in the path; derive it from the Referer (the
+    // page issuing the request). This is what makes "select a company → see
+    // ITS data" work: every API read/write is scoped to its page's workspace.
+    const referer = req.headers.get("referer") || "";
+    try {
+      const r = resolveFrom(new URL(referer).pathname.split("/").filter(Boolean));
+      workspaceSlug = r.ws; businessSlug = r.biz;
+    } catch { /* no/invalid referer — fall through to dev fallback */ }
   }
 
   // Subdomain takes precedence for business
@@ -137,11 +158,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   } else {
-    // Auth disabled — create a dummy user for development
+    // Auth disabled — dummy dev user. Leave workspaceId empty so the API layer
+    // resolves the REAL workspace from x-workspace-slug (set below), not a fake id.
     if (workspaceSlug) {
       user = {
         userId: "dev-user",
-        workspaceId: "dev-workspace",
+        workspaceId: "",
         role: "admin",
       };
     }
@@ -157,7 +179,7 @@ export async function middleware(req: NextRequest) {
   }
   if (user) {
     headers.set("x-user-id", user.userId);
-    headers.set("x-workspace-id", user.workspaceId);
+    if (user.workspaceId) headers.set("x-workspace-id", user.workspaceId);
     headers.set("x-user-role", user.role);
   }
 

@@ -53,24 +53,28 @@ export default function CompanyDetailPage() {
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showLogActivity, setShowLogActivity] = useState(false);
+  const [allCompanies, setAllCompanies] = useState<any[]>([]);
 
   async function load() {
     setLoading(true);
     try {
-      const [cRes, conRes, dRes, aRes] = await Promise.all([
+      const [cRes, conRes, dRes, aRes, allRes] = await Promise.all([
         fetch(`/api/companies/${id}`),
         fetch(`/api/contacts?companyId=${id}`),
         fetch(`/api/deals?companyId=${id}`),
         fetch(`/api/activities?entityType=company&entityId=${id}`),
+        fetch(`/api/companies`),
       ]);
       const cData = await cRes.json().catch(() => ({}));
       const conData = await conRes.json().catch(() => ({}));
       const dData = await dRes.json().catch(() => ({}));
       const aData = await aRes.json().catch(() => ({}));
+      const allData = await allRes.json().catch(() => ({}));
       setCompany(cData.data || null);
       setContacts(conData.data || []);
       setDeals(dData.data || []);
       setActivities(aData.data || []);
+      setAllCompanies(allData.data || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   }
@@ -245,6 +249,37 @@ export default function CompanyDetailPage() {
                     <span className="capitalize">{company.type || "prospect"}</span>
                   </div>
                 </div>
+              </GlassCard>
+
+              {/* Account hierarchy (parent / child accounts) */}
+              <GlassCard className="p-5">
+                <h3 className="text-sm font-semibold text-[#f7f8f8] mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-faint" /> Account hierarchy</h3>
+                <span className="block text-[11px] font-medium text-muted uppercase tracking-wider mb-1.5">Parent account</span>
+                <select
+                  value={company.parentCompanyId || ""}
+                  onChange={e => patchField("parentCompanyId", e.target.value)}
+                  className="w-full h-9 px-2.5 rounded-lg bg-[#08090a] border border-white/[0.08] text-[13px] text-[#d0d6e0] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/40"
+                >
+                  <option value="">— None —</option>
+                  {allCompanies.filter((c: any) => c.id !== company.id).map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {(() => {
+                  const children = allCompanies.filter((c: any) => c.parentCompanyId === company.id);
+                  return children.length > 0 ? (
+                    <div className="mt-4 pt-3 border-t border-white/[0.06]">
+                      <span className="block text-[11px] font-medium text-muted uppercase tracking-wider mb-2">Child accounts ({children.length})</span>
+                      <div className="space-y-1.5">
+                        {children.map((c: any) => (
+                          <a key={c.id} href={`/${workspace}/companies/${c.id}`} className="flex items-center gap-2 text-[13px] text-[#d0d6e0] hover:text-[#9aa4f2] transition-colors">
+                            <Building2 className="w-3.5 h-3.5 text-faint" /> {c.name}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </GlassCard>
             </div>
           </motion.div>

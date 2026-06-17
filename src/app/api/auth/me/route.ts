@@ -5,9 +5,22 @@ import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const payload = await verifyToken(token);
-  if (!payload) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const payload = token ? await verifyToken(token) : null;
+
+  // Dev fallback (auth disabled): return first active workspace + a user so the
+  // app shell renders without a session. No-op once REQUIRE_AUTH=true.
+  if (!payload) {
+    if (process.env.REQUIRE_AUTH !== "true") {
+      const active = await db.select().from(schema.workspaces).where(eq(schema.workspaces.status, "active"));
+      const workspace = active[0] ?? (await db.select().from(schema.workspaces))[0];
+      if (workspace) {
+        const [anyUser] = await db.select().from(schema.users).where(eq(schema.users.workspaceId, workspace.id));
+        const user = anyUser ?? { id: "dev-user", email: "dev@local", name: "Dev User", role: "admin", workspaceId: workspace.id };
+        return NextResponse.json({ data: { user, workspace } });
+      }
+    }
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, payload.userId));
   const [workspace] = await db.select().from(schema.workspaces).where(eq(schema.workspaces.id, payload.workspaceId));

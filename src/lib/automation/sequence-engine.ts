@@ -1,6 +1,7 @@
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
+import { injectTracking } from "@/lib/email-tracking";
 
 export async function processSequences(workspaceId: string): Promise<{sent: number; skipped: number; completed: number; paused: number; failed: number}> {
   const now = Date.now();
@@ -64,11 +65,14 @@ export async function processSequences(workspaceId: string): Promise<{sent: numb
         deliveryStatus: "pending",
       }).returning();
 
+      // Inject open/click tracking now that we have the email row id
+      const trackedHtml = injectTracking(htmlBody, emailRecord.id);
+
       // Actually send the email
       const sendResult = await sendEmail({
         to: contact.email || "",
         subject: currentStep.subject,
-        html: htmlBody,
+        html: trackedHtml,
         text: emailBody,
         contactId: enrollment.contactId,
         workspaceId,
