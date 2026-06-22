@@ -44,6 +44,7 @@ export default function ProspectingPage() {
   }, []);
 
   const search = useCallback(async () => {
+    setSelected(new Set()); // clear selection on every new search so import only ever targets visible rows
     setLoading(true);
     const b = SIZE_BANDS[band];
     const filters: any = { q: q || undefined, title: title || undefined, limit: 100 };

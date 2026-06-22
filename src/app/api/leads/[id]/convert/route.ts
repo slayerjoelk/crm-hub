@@ -4,6 +4,16 @@ import { withWorkspace } from "@/lib/middleware";
 import { eq, and, asc } from "drizzle-orm";
 import { runWorkflows } from "@/lib/automation/workflow-engine";
 
+// leads.source allows values (list_import, prospecting) that aren't valid in the
+// contacts.sourceType enum — map them so conversion never stores an invalid value.
+const CONTACT_SOURCE_TYPES = new Set(["organic","paid","referral","social","email","event","partner","outbound","other"]);
+function toContactSource(leadSource: string | null | undefined): string {
+  const s = leadSource || "other";
+  if (CONTACT_SOURCE_TYPES.has(s)) return s;
+  if (s === "list_import" || s === "prospecting") return "outbound";
+  return "other";
+}
+
 /* ────────────────────────────────────────────
    Lead Conversion  (Salesforce-style)
    Lead → Account (company) + Contact + (optional) Opportunity (deal)
@@ -50,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         phone: lead.phone, jobTitle: lead.jobTitle, companyId,
         lifecycleStage: "qualified", leadStatus: "connected",
         leadScore: lead.leadScore || 0,
-        sourceType: (lead.source as any) || "other", sourceDetail: lead.sourceDetail || "Converted from lead",
+        sourceType: toContactSource(lead.source) as any, sourceDetail: lead.sourceDetail || "Converted from lead",
         linkedinUrl: lead.linkedinUrl, website: lead.website,
         city: lead.city, state: lead.state, country: lead.country,
         notes: lead.notes, lastActivityAt: new Date(),

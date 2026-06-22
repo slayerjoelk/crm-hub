@@ -55,9 +55,12 @@ export function DataTable<T extends Record<string, any>>({
   const [showFilters, setShowFilters] = useState(false);
 
   const filterableKeys = useMemo(() => {
+    // Exclude id/internal columns so we don't surface raw UUIDs as filter dropdowns
+    const isInternal = (k: string) => k === "id" || /Id$/.test(k) || k === "createdAt" || k === "updatedAt" || k === "notes" || k === "avatarUrl";
     const keys = new Set<string>();
     data.forEach((row) => {
       Object.keys(row).forEach((k) => {
+        if (isInternal(k)) return;
         if (typeof row[k] === "string" && row[k].length < 40) keys.add(k);
       });
     });
@@ -209,6 +212,7 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={(e) => {
                   const val = e.target.value;
                   setFilters((prev) => ({ ...prev, [key]: val ? [val] : [] }));
+                  setPage(0);
                 }}
                 className="h-8 px-3 pr-7 rounded-md text-[12px] text-[#d0d6e0] appearance-none cursor-pointer focus:outline-none"
                 style={{

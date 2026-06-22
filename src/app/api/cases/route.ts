@@ -20,14 +20,24 @@ export async function POST(req: NextRequest) {
       await ensureTables();
       const b = await req.json();
       if (!b.subject) return NextResponse.json({ error: "subject is required" }, { status: 400 });
-      const all = await db.select({ n: schema.cases.caseNumber }).from(schema.cases).where(eq(schema.cases.workspaceId, workspaceId));
-      const nextNum = (all.reduce((m, r) => Math.max(m, r.n || 0), 0)) + 1;
-      const [item] = await db.insert(schema.cases).values({
-        workspaceId, caseNumber: nextNum, subject: b.subject, description: b.description || null,
-        status: b.status || "new", priority: b.priority || "medium", type: b.type || "question",
-        origin: b.origin || "web", contactId: b.contactId || null, companyId: b.companyId || null,
-        ownerId: userId === "dev-user" ? null : userId,
-      }).returning();
+      // Per-workspace case number. A UNIQUE(workspace_id, case_number) index makes
+      // concurrent inserts collide; retry with a recomputed number instead of duplicating.
+      let item: any = null;
+      for (let attempt = 0; attempt < 5 && !item; attempt++) {
+        const all = await db.select({ n: schema.cases.caseNumber }).from(schema.cases).where(eq(schema.cases.workspaceId, workspaceId));
+        const nextNum = all.reduce((m, r) => Math.max(m, r.n || 0), 0) + 1 + attempt;
+        try {
+          [item] = await db.insert(schema.cases).values({
+            workspaceId, caseNumber: nextNum, subject: b.subject, description: b.description || null,
+            status: b.status || "new", priority: b.priority || "medium", type: b.type || "question",
+            origin: b.origin || "web", contactId: b.contactId || null, companyId: b.companyId || null,
+            ownerId: userId === "dev-user" ? null : userId,
+          }).returning();
+        } catch (e: any) {
+          if (!/unique|constraint/i.test(e?.message || "")) throw e; // real error → bubble up
+        }
+      }
+      if (!item) return NextResponse.json({ error: "Could not allocate case number" }, { status: 500 });
       return NextResponse.json({ data: item }, { status: 201 });
     } catch { return NextResponse.json({ error: "Failed to create case" }, { status: 500 }); }
   });

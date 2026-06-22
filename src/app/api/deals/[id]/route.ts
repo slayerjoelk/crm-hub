@@ -4,6 +4,13 @@ import { withWorkspace } from "@/lib/middleware";
 import { eq, and, desc } from "drizzle-orm";
 import { runWorkflows } from "@/lib/automation/workflow-engine";
 
+const PROTECTED = new Set(["id", "workspaceId", "createdAt"]);
+function sanitize(body: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(body || {})) if (!PROTECTED.has(k)) out[k] = v;
+  return out;
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const id = (await params).id;
@@ -20,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const id = (await params).id;
-    const body = await req.json();
+    const body = sanitize(await req.json());
     // Capture the prior state so we can detect stage/status transitions
     const [before] = await db.select().from(schema.deals).where(and(eq(schema.deals.id, id), eq(schema.deals.workspaceId, workspaceId)));
     const [item] = await db.update(schema.deals).set(body).where(and(eq(schema.deals.id, id), eq(schema.deals.workspaceId, workspaceId))).returning();

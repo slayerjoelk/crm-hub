@@ -37,17 +37,26 @@ export async function POST(req: NextRequest) {
       await ensureTables();
       const b = await req.json();
       if (!b.name) return NextResponse.json({ error: "name is required" }, { status: 400 });
-      const all = await db.select({ n: schema.quotes.quoteNumber }).from(schema.quotes).where(eq(schema.quotes.workspaceId, workspaceId));
-      const nextNum = all.reduce((m, r) => Math.max(m, r.n || 0), 0) + 1;
-
       const { lines, subtotal, total } = computeTotals(b.lineItems || [], b.discountPercent || 0, b.taxPercent || 0);
-      const [quote] = await db.insert(schema.quotes).values({
-        workspaceId, quoteNumber: nextNum, name: b.name,
-        dealId: b.dealId || null, contactId: b.contactId || null, companyId: b.companyId || null,
-        status: b.status || "draft", currency: b.currency || "USD",
-        discountPercent: Number(b.discountPercent) || 0, taxPercent: Number(b.taxPercent) || 0,
-        subtotal, total, validUntil: b.validUntil ? new Date(b.validUntil) : null, notes: b.notes || null,
-      }).returning();
+
+      // Per-workspace quote number, retried on the UNIQUE(workspace_id, quote_number) index.
+      let quote: any = null;
+      for (let attempt = 0; attempt < 5 && !quote; attempt++) {
+        const all = await db.select({ n: schema.quotes.quoteNumber }).from(schema.quotes).where(eq(schema.quotes.workspaceId, workspaceId));
+        const nextNum = all.reduce((m, r) => Math.max(m, r.n || 0), 0) + 1 + attempt;
+        try {
+          [quote] = await db.insert(schema.quotes).values({
+            workspaceId, quoteNumber: nextNum, name: b.name,
+            dealId: b.dealId || null, contactId: b.contactId || null, companyId: b.companyId || null,
+            status: b.status || "draft", currency: b.currency || "USD",
+            discountPercent: Number(b.discountPercent) || 0, taxPercent: Number(b.taxPercent) || 0,
+            subtotal, total, validUntil: b.validUntil ? new Date(b.validUntil) : null, notes: b.notes || null,
+          }).returning();
+        } catch (e: any) {
+          if (!/unique|constraint/i.test(e?.message || "")) throw e;
+        }
+      }
+      if (!quote) return NextResponse.json({ error: "Could not allocate quote number" }, { status: 500 });
 
       for (const li of lines) {
         await db.insert(schema.quoteLineItems).values({

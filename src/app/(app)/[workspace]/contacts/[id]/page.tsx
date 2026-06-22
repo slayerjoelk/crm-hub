@@ -286,7 +286,7 @@ export default function ContactDetailPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => router.push(`./deals/${deal.id}`)}
+                onClick={() => router.push(`/${workspace}/deals/${deal.id}`)}
                 className="group flex items-center justify-between p-4 rounded-xl bg-surface border border-white/[0.06] hover:border-white/[0.10] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -327,7 +327,7 @@ export default function ContactDetailPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => router.push(`./tasks/${task.id}`)}
+                onClick={() => router.push(`/${workspace}/tasks/${task.id}`)}
                 className="group flex items-center justify-between p-4 rounded-xl bg-surface border border-white/[0.06] hover:border-white/[0.10] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-3">

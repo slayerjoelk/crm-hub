@@ -70,7 +70,7 @@ export default function DealsPage() {
     return new Intl.NumberFormat("en-US", { style:"currency", currency: c, maximumFractionDigits: 0 }).format(v);
   }
 
-  const stages = pipeline?.stages?.sort((a: any, b: any) => (a.displayOrder??0) - (b.displayOrder??0)) ?? [];
+  const stages = pipeline?.stages ? [...pipeline.stages].sort((a: any, b: any) => (a.displayOrder??0) - (b.displayOrder??0)) : [];
   const inputCls = "w-full h-10 px-3 rounded-xl bg-zinc-900 border border-zinc-700/80 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/10 transition-all";
   const labelCls = "text-xs font-medium text-zinc-400 mb-1.5 block";
 

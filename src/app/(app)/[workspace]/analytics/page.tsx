@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   BarChart3, TrendingUp, Users, Building2, DollarSign,
   ArrowUpRight, ArrowDownRight, Activity
@@ -34,6 +34,7 @@ function Kpi({ title, value, icon: Icon, trend, suffix = "" }: any) {
 
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { workspace } = useParams<{ workspace: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -137,7 +138,7 @@ export default function AnalyticsPage() {
         <h3 className="text-sm font-semibold text-[#d0d6e0] mb-4">Top Won Deals</h3>
         <div className="space-y-2">
           {(data?.topDeals ?? []).map((d: any) => (
-            <button key={d.id} onClick={() => router.push(`./deals/${d.id}`)}
+            <button key={d.id} onClick={() => router.push(`/${workspace}/deals/${d.id}`)}
               className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors text-left">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#10b981]/[0.12] text-[#10b981] flex items-center justify-center"><DollarSign className="w-4 h-4" /></div>

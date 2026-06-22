@@ -14,10 +14,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 }
 
+const PROTECTED = new Set(["id", "workspaceId", "createdAt"]);
+function sanitize(body: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(body || {})) if (!PROTECTED.has(k)) out[k] = v;
+  return out;
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withWorkspace(req, async ({ workspaceId }) => {
     const id = (await params).id;
-    const body = await req.json();
+    const body = sanitize(await req.json());
     const [item] = await db.update(schema.companies).set(body).where(and(eq(schema.companies.id, id), eq(schema.companies.workspaceId, workspaceId))).returning();
     return NextResponse.json({ data: item });
   });

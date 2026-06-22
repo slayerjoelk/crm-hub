@@ -47,7 +47,7 @@ export default function CampaignsPage() {
           {items.map(c => (
             <motion.div key={c.id} layout className="rounded-xl bg-gradient-to-b from-[#141517] to-[#0f1011] border border-white/[0.07] p-5 hover:border-white/[0.12] transition-colors">
               <div className="flex items-start justify-between mb-3">
-                <div className="min-w-0"><div className="text-[15px] font-semibold text-[#f7f8f8] truncate">{c.name}</div><div className="text-[12px] text-[#62666d] capitalize mt-0.5">{c.type.replace(/_/g," ")}</div></div>
+                <div className="min-w-0"><div className="text-[15px] font-semibold text-[#f7f8f8] truncate">{c.name}</div><div className="text-[12px] text-[#62666d] capitalize mt-0.5">{(c.type || "").replace(/_/g," ")}</div></div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border capitalize ${STATUS[c.status] || STATUS.planned}`}>{c.status}</span>
                   <button onClick={() => setManaging(c)} title="Manage members" className="w-7 h-7 rounded-md flex items-center justify-center text-[#62666d] hover:text-[#9aa4f2] hover:bg-[#5e6ad2]/10"><Users2 className="w-3.5 h-3.5" /></button>

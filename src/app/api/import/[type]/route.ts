@@ -43,6 +43,18 @@ export const POST = withRateLimit(async function importHandler(req: NextRequest,
     const results: any[] = [];
     const errors: string[] = [];
 
+    // Deals require a pipeline + stage (NOT NULL). Resolve a default once up front.
+    let dealPipeline: any = null;
+    let dealStages: any[] = [];
+    if (type === "deals") {
+      const pls = await db.select().from(schema.pipelines).where(eq(schema.pipelines.workspaceId, workspaceId));
+      dealPipeline = pls.find((p: any) => p.isDefault) || pls[0];
+      if (!dealPipeline) {
+        return NextResponse.json({ error: "Create a pipeline before importing deals" }, { status: 400 });
+      }
+      dealStages = await db.select().from(schema.pipelineStages).where(eq(schema.pipelineStages.pipelineId, dealPipeline.id));
+    }
+
     for (const row of data) {
       if (row.length < headers.length && row.every(c => !c)) continue;
       const obj: any = { workspaceId };
@@ -71,7 +83,7 @@ export const POST = withRateLimit(async function importHandler(req: NextRequest,
           if (key.includes("name")) obj.name = val;
           else if (key.includes("amount") || key.includes("value")) obj.value = parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
           else if (key.includes("currency")) obj.currency = val;
-          else if (key.includes("stage")) obj.stage = val;
+          else if (key.includes("stage")) obj._stageName = val; // resolved to stageId below
           else if (key.includes("contact")) obj.primaryContactId = val;
           else if (key.includes("date")) obj.expectedCloseDate = val ? new Date(val) : undefined;
         } else if (type === "tasks") {
@@ -84,6 +96,20 @@ export const POST = withRateLimit(async function importHandler(req: NextRequest,
         }
       }
       if (Object.keys(obj).length <= 1) continue;
+
+      // Deals: map the CSV stage name → a real stageId and set the required pipelineId
+      if (type === "deals") {
+        if (!obj.name) { errors.push("Deal row skipped: missing name"); continue; }
+        const wanted = String(obj._stageName || "").toLowerCase();
+        const stage = dealStages.find((s: any) => (s.name || "").toLowerCase() === wanted)
+          || dealStages.sort((a: any, b: any) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))[0];
+        delete obj._stageName;
+        if (!stage) { errors.push(`Deal "${obj.name}": pipeline has no stages`); continue; }
+        obj.pipelineId = dealPipeline.id;
+        obj.stageId = stage.id;
+        obj.status = obj.status || "open";
+      }
+
       try {
         let table: any = null;
         if (type === "contacts") table = schema.contacts;

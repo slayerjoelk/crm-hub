@@ -59,6 +59,8 @@ export async function ensureTables() {
       CREATE TABLE IF NOT EXISTS quotes (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, quote_number integer NOT NULL, name text NOT NULL, deal_id text, contact_id text, company_id text, status text NOT NULL DEFAULT 'draft', currency text DEFAULT 'USD', subtotal real DEFAULT 0, discount_percent real DEFAULT 0, tax_percent real DEFAULT 0, total real DEFAULT 0, valid_until integer, notes text, created_at integer, updated_at integer);
       CREATE TABLE IF NOT EXISTS quote_line_items (id text PRIMARY KEY, quote_id text NOT NULL REFERENCES quotes(id) ON DELETE CASCADE, product_id text, name text NOT NULL, quantity real DEFAULT 1, unit_price real DEFAULT 0, discount_percent real DEFAULT 0, line_total real DEFAULT 0, display_order integer DEFAULT 0);
       CREATE TABLE IF NOT EXISTS reports (id text PRIMARY KEY, workspace_id text NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name text NOT NULL, description text, config text NOT NULL, created_by text, created_at integer, updated_at integer);
+      CREATE UNIQUE INDEX IF NOT EXISTS ux_cases_number ON cases(workspace_id, case_number);
+      CREATE UNIQUE INDEX IF NOT EXISTS ux_quotes_number ON quotes(workspace_id, quote_number);
     `);
 
     // Self-heal: add columns that pre-date the current schema.

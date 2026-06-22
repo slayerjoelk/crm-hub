@@ -103,7 +103,8 @@ export default function PortfolioPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => enter(c)}
-                className="group relative text-left bg-gradient-to-b from-[#151619] to-[#0f1011] border border-white/[0.07] rounded-2xl p-5 overflow-hidden hover:border-white/[0.14] hover:-translate-y-0.5 transition-all"
+                disabled={!c.workspaceSlug}
+                className={`group relative text-left bg-gradient-to-b from-[#151619] to-[#0f1011] border border-white/[0.07] rounded-2xl p-5 overflow-hidden transition-all ${c.workspaceSlug ? "hover:border-white/[0.14] hover:-translate-y-0.5" : "opacity-60 cursor-not-allowed"}`}
               >
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.10] to-transparent" />
                 <div className="flex items-start justify-between mb-4">
@@ -127,9 +128,13 @@ export default function PortfolioPage() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
                   <span className="text-[11px] text-[#62666d]">{c.stats.wonRevenue > 0 ? `${fmtMoney(c.stats.wonRevenue)} won` : "No revenue yet"}</span>
-                  <span className="text-[12px] font-medium text-[#9aa4f2] group-hover:text-white flex items-center gap-1 transition-colors">
-                    Open CRM <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
+                  {c.workspaceSlug ? (
+                    <span className="text-[12px] font-medium text-[#9aa4f2] group-hover:text-white flex items-center gap-1 transition-colors">
+                      Open CRM <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  ) : (
+                    <span className="text-[12px] font-medium text-[#62666d]">Setup needed</span>
+                  )}
                 </div>
               </motion.button>
             ))}

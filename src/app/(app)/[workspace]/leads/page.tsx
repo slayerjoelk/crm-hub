@@ -45,7 +45,7 @@ export default function LeadsPage() {
     load();
   }
 
-  const filtered = leads.filter(l => !q || `${l.firstName} ${l.lastName} ${l.email} ${l.company}`.toLowerCase().includes(q.toLowerCase()));
+  const filtered = leads.filter(l => !q || `${l.firstName || ""} ${l.lastName || ""} ${l.email || ""} ${l.company || ""}`.toLowerCase().includes(q.toLowerCase()));
   const open = leads.filter(l => !l.isConverted).length;
 
   return (
